@@ -1,0 +1,102 @@
+/* ======== PALETA FRSTORE ======== */
+:root {
+    --fr-yellow: #EFD700;
+    --fr-yellow-light: #F4E849;
+    --fr-yellow-soft: #F8F28F;
+    --fr-black: #0A0A0A;
+    --fr-black-strong: #000000;
+    --fr-gray-light: #F8F8F8;
+}
+
+/* ======== SIDEBAR ======== */
+.sidebar {
+    background-color: var(--fr-black) !important;
+    color: var(--fr-yellow-light) !important;
+}
+
+.sidebar .nav-link {
+    color: var(--fr-yellow-light) !important;
+    font-weight: bold;
+}
+
+.sidebar .nav-link:hover {
+    background-color: var(--fr-yellow) !important;
+    color: var(--fr-black) !important;
+}
+
+.sidebar .sidebar-brand {
+    background-color: var(--fr-black) !important;
+}
+
+/* ======== BOTONES ======== */
+.btn-frstore {
+    background-color: var(--fr-yellow);
+    border-color: var(--fr-yellow);
+    color: var(--fr-black);
+    font-weight: bold;
+}
+
+.btn-frstore:hover {
+    background-color: var(--fr-yellow-light);
+    border-color: var(--fr-yellow-light);
+    color: var(--fr-black);
+}
+
+/* ======== TARJETAS DEL DASHBOARD ======== */
+.card-frstore {
+    background: var(--fr-yellow);
+    color: var(--fr-black);
+    font-weight: bold;
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.card-frstore-dark {
+    background: var(--fr-black);
+    color: var(--fr-yellow-light);
+    border-radius: 14px;
+    border: 2px solid var(--fr-yellow);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ==== TABLAS === */
+.table-frstore thead {
+    background-color: var(--fr-black);
+    color: var(--fr-yellow-light);
+}
+
+.table-frstore tbody tr:hover {
+    background-color: var(--fr-yellow-soft);
+}
+
+/* ===== TITULOS ===== */
+.title-frstore {
+    color: var(--fr-black);
+    font-weight: 800;
+}
+
+.title-frstore-dark {
+    color: var(--fr-yellow-light);
+}
+
+/* ======== MODO OSCURO ======== */
+body.dark {
+    background-color: var(--fr-black);
+    color: var(--fr-yellow-soft);
+}
+
+.dark .card {
+    background-color: var(--fr-black);
+    color: var(--fr-yellow);
+    border: 1px solid var(--fr-yellow-light);
+}
+
+.dark .navbar,
+.dark .sidebar {
+    background-color: var(--fr-black-strong) !important;
+}
+
+.dark .table {
+    color: var(--fr-yellow-soft);
+}
