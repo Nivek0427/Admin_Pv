@@ -97,8 +97,28 @@
         <div class="summary">
             Total ventas (dinero): ${{ number_format($totalVentas, 0, ',', '.') }}
             &nbsp; | &nbsp;
-            Total unidades vendidas: {{ number_format($totalProductosVendidos, 0, ',', '.') }}
         </div>
+        @if(!empty($productosVendidos))
+            <h4 style="margin-top:10px;">Unidades vendidas por producto (solo ventas activas)</h4>
+
+            <table style="margin-bottom:10px;">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th style="width:15%" class="text-right">Unidades</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($productosVendidos as $producto => $cantidad)
+                        <tr>
+                            <td>{{ $producto }}</td>
+                            <td class="text-right">{{ number_format($cantidad, 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+
 
         <table>
             <thead>
@@ -107,6 +127,7 @@
                     <th style="width:30%">Cliente</th>
                     <th style="width:14%">Fecha</th>
                     <th style="width:12%" class="text-right">Total</th>
+                    <th>Método de pago</th>
                     <th style="width:12%">Estado</th>
                     <th style="width:26%">Productos (qty × nombre)</th>
                 </tr>
@@ -120,6 +141,7 @@
                             {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y H:i') }}
                         </td>
                         <td class="text-right">${{ number_format($v->total, 0, ',', '.') }}</td>
+                        <td>{{ ucfirst($v->metodo_pago) }}</td>
                         <td>{{ ucfirst($v->estado) }}</td>
                         <td>
                             @foreach($v->detalles as $d)

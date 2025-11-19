@@ -9,6 +9,11 @@
     <form action="{{ route('ventas.store') }}" method="POST" id="ventaForm">
         @csrf
 
+        <div class="mb-3">
+            <label for="cliente" class="form-label">Nombre del cliente</label>
+            <input type="text" name="cliente" id="cliente" class="form-control" placeholder="Ej: Juan Pérez">
+        </div>
+
         <!-- Selección de producto -->
         <div class="row mb-3">
             <div class="col-md-6">
@@ -37,6 +42,17 @@
             <div class="col-md-2">
                 <label for="precio" class="form-label">Precio</label>
                 <input type="number" id="precio" class="form-control">
+            </div>
+
+            <div class="col-md-3">
+                <label for="metodo_pago" class="form-label">Método de pago</label>
+                <select name="metodo_pago" id="metodo_pago" class="form-control" required>
+                    <option value="">Seleccione...</option>
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="sistecredito">Sistecrédito</option>
+                </select>
             </div>
 
             <div class="col-md-3 d-flex align-items-end">

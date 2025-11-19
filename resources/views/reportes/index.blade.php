@@ -18,7 +18,7 @@
 
     <div class="col-md-3">
         <label for="tipo" class="form-label">Filtro rápido</label>
-        <select name="tipo" id="tipo" class="form-select">
+        <select name="tipo" id="tipo" class="form-control">
             <option value="">-- Seleccionar --</option>
             <option value="dia" {{ request('tipo')=='dia'?'selected':'' }}>Hoy</option>
             <option value="semana" {{ request('tipo')=='semana'?'selected':'' }}>Esta semana</option>
@@ -27,13 +27,25 @@
     </div>
 
     <div class="col-md-3">
-        <label for="estado" class="form-label">Estado</label>
-        <select name="estado" id="estado" class="form-select">
+        <label>Estado</label>
+        <select name="estado" id="estado" class="form-control">
             <option value="">Todos</option>
             <option value="activa" {{ request('estado')=='activa'?'selected':'' }}>Activas</option>
             <option value="revocada" {{ request('estado')=='revocada'?'selected':'' }}>Revocadas</option>
         </select>
     </div>
+
+    <div class="col-md-3">
+        <label>Método de pago</label>
+        <select name="metodo_pago" class="form-control">
+            <option value="">Todos</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="sistecredito">Sistecrédito</option>
+        </select>
+    </div>
+
 
     <div class="col-md-12 d-flex align-items-end gap-2 mt-2">
         <button class="btn btn-primary w-25"
@@ -63,6 +75,7 @@
                 <th>Cliente</th>
                 <th>Fecha</th>
                 <th>Total</th>
+                <th>Método de pago</th>
                 <th>Estado</th>
             </tr>
         </thead>
@@ -73,6 +86,7 @@
                     <td>{{ $venta->cliente ?? '-' }}</td>
                     <td>{{ $venta->fecha }}</td>
                     <td>${{ number_format($venta->total, 0, ',', '.') }}</td>
+                    <td>{{ ucfirst($venta->metodo_pago) }}</td>
                     <td>
                         @if($venta->estado === 'activa')
                             <span class="badge bg-success">Activa</span>

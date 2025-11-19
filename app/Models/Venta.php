@@ -15,7 +15,8 @@ class Venta extends Model
         'total',
         'estado', // 'activa' o 'revocada'
         'revocada_fecha',
-        'revocada_motivo'
+        'revocada_motivo',
+        'metodo_pago',
     ];
 
     protected $dates = ['revocada_fecha'];

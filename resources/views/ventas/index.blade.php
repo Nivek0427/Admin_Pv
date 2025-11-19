@@ -18,13 +18,54 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
+    <div class="mb-3">
+        <form class="row g-2">
+
+            <div class="col-auto">
+                <select name="tipo" class="form-control" onchange="this.form.submit()">
+                    <option value="">Hoy</option>
+                    <option value="ayer" {{ request('tipo')=='ayer' ? 'selected' : '' }}>Ayer</option>
+                    <option value="semana" {{ request('tipo')=='semana' ? 'selected' : '' }}>Esta semana</option>
+                    <option value="mes" {{ request('tipo')=='mes' ? 'selected' : '' }}>Este mes</option>
+                    <option value="rango" {{ request('tipo')=='rango' ? 'selected' : '' }}>Rango de fechas</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select name="metodo_pago" class="form-control" onchange="this.form.submit()">
+                    <option value="">Todos los métodos</option>
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="sistecredito">Sistecrédito</option>
+                </select>
+            </div>
+
+            @if(request('tipo') == 'rango')
+            <div class="col-auto">
+                <input type="date" name="desde" class="form-control" value="{{ request('desde') }}">
+            </div>
+
+            <div class="col-auto">
+                <input type="date" name="hasta" class="form-control" value="{{ request('hasta') }}">
+            </div>
+
+            <div class="col-auto">
+                <button class="btn btn-primary">Aplicar</button>
+            </div>
+            @endif
+
+        </form>
+    </div>
+
     <table class="table table-bordered">
-        <thead>
+        <thead class="table-dark">
             <tr>
                 <th>ID</th>
                 <th>Cliente</th>
                 <th>Fecha</th>
                 <th>Total</th>
+                <th>Método de pago</th>
                 <th>Estado</th>
                 <th>Acciones</th>
             </tr>
@@ -36,6 +77,7 @@
                     <td>{{ $venta->cliente ?? '-' }}</td>
                     <td>{{ $venta->fecha }}</td>
                     <td>${{ number_format($venta->total, 0, ',', '.') }}</td>
+                    <td>{{ ucfirst($venta->metodo_pago) }}</td>
                     <td>
                         @if($venta->estado === 'activa')
                             <span class="badge bg-success">Activa</span>

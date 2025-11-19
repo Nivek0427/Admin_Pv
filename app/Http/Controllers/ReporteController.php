@@ -23,7 +23,7 @@ class ReporteController extends Controller
             $ventas->whereBetween('fecha', [$request->desde, $request->hasta]);
             $hayFiltros = true;
         }
-        
+
         // Filtros rápidos
         elseif ($tipo === 'dia') {
             $ventas->whereDate('fecha', Carbon::today());
@@ -44,7 +44,13 @@ class ReporteController extends Controller
             $ventas->where('estado', $estado);
             $hayFiltros = true;
         }
-        
+        //filtro por metodo de pago
+        if ($request->filled('metodo_pago')) {
+            $ventas->where('metodo_pago', $request->metodo_pago);
+            $hayFiltros = true;
+        }
+
+
 
         if (!$hayFiltros) {
             // Si no hay filtros, mostrar solo ventas del día por defecto
@@ -72,13 +78,13 @@ class ReporteController extends Controller
         $tipo = $request->input('tipo');
         $estado = $request->input('estado');
 
-        $query = Venta::query();
+        $query = Venta::query()->with('detalles.producto');
 
-        // Filtro por rango (fecha es campo 'fecha' en tu modelo)
+        // Filtro por rango (fecha)
         if ($request->filled('desde') && $request->filled('hasta')) {
             $query->whereBetween('fecha', [$request->desde, $request->hasta]);
         }
-        // Filtro rápido
+        // Filtros rápidos
         elseif ($tipo === 'dia') {
             $query->whereDate('fecha', Carbon::today());
         } elseif ($tipo === 'semana') {
@@ -90,23 +96,53 @@ class ReporteController extends Controller
             $query->whereMonth('fecha', Carbon::now()->month);
         }
 
-        // Filtro por estado (si viene)
-        if ($estado === 'activa') {
-            $query->where('estado', 'activa');
-        } elseif ($estado === 'revocada') {
-            $query->where('estado', 'revocada');
+        // Filtro por estado
+        if ($estado === 'activa' || $estado === 'revocada') {
+            $query->where('estado', $estado);
         }
 
-        $ventas = $query->with('detalles')->orderBy('fecha', 'desc')->get();
+        // Filtro por método de pago
+        if ($request->filled('metodo_pago')) {
+            $query->where('metodo_pago', $request->metodo_pago);
+        }
 
-        // Totales: total dinero y total unidades vendidas (sumando cantidades de detalles)
+        $ventas = $query->orderBy('fecha', 'desc')->get();
+
+        // ==============================
+        //  TOTALES CORRECTOS
+        // ==============================
+
+        // Total dinero (solo activas)
         $totalVentas = $ventas->where('estado', 'activa')->sum('total');
-        $totalProductosVendidos = $ventas->flatMap(function($v){
-            return $v->detalles;
-        })->sum('cantidad');
 
-        // Filtros aplicados (para mostrar en encabezado del PDF)
+        // Total de unidades (solo activas)
+        $totalProductosVendidos = 0;
+        $productosVendidos = [];
+
+        foreach ($ventas as $venta) {
+            if ($venta->estado === 'activa') {
+                foreach ($venta->detalles as $detalle) {
+
+                    // sumar unidades totales
+                    $totalProductosVendidos += $detalle->cantidad;
+
+                    // agrupar por producto
+                    $nombre = $detalle->producto?->nombre ?? '[producto eliminado]';
+
+                    if (!isset($productosVendidos[$nombre])) {
+                        $productosVendidos[$nombre] = 0;
+                    }
+
+                    $productosVendidos[$nombre] += $detalle->cantidad;
+                }
+            }
+        }
+
+        // ==============================
+        //  FILTROS PARA EL PDF
+        // ==============================
         $filtros = [];
+
         if ($request->filled('desde') && $request->filled('hasta')) {
             $filtros[] = 'Desde: '.$request->desde.' - Hasta: '.$request->hasta;
         } elseif ($tipo) {
@@ -114,9 +150,14 @@ class ReporteController extends Controller
         } else {
             $filtros[] = 'Filtro rápido: Ninguno';
         }
+
         $filtros[] = 'Estado: '.($estado ?: 'Todos');
 
-        // Logo - usar public_path para que DomPDF lo incluya correctamente
+        if ($request->filled('metodo_pago')) {
+            $filtros[] = 'Método de pago: '.ucfirst($request->metodo_pago);
+        }
+
+        // logo
         $logoPath = public_path('images/logo_FrStore.png');
 
         $pdf = Pdf::loadView('reportes.pdf', [
@@ -124,15 +165,16 @@ class ReporteController extends Controller
             'titulo' => 'Reporte de Ventas',
             'totalVentas' => $totalVentas,
             'totalProductosVendidos' => $totalProductosVendidos,
+            'productosVendidos' => $productosVendidos,  // << SE AGREGA
             'filtros' => $filtros,
             'logo' => $logoPath,
         ]);
 
-        // Opciones (ajusta según necesidad)
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download('reporte_ventas_'.now()->format('Ymd_His').'.pdf');
     }
+
 
 
 }

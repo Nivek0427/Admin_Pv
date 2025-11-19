@@ -7,17 +7,55 @@ use App\Models\Producto;
 use App\Models\DetalleVenta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class VentaController extends Controller
 {
     /**
      * Muestra todas las ventas registradas.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $ventas = Venta::with('detalles.producto')->latest()->get();
+        $query = Venta::orderBy('fecha', 'desc');
+
+        // 1. Filtro rápido: tipo
+        $tipo = $request->get('tipo');
+
+        switch ($tipo) {
+            case 'ayer':
+                $query->whereDate('fecha', Carbon::yesterday());
+                break;
+
+            case 'semana':
+                $query->whereBetween('fecha', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+
+            case 'mes':
+                $query->whereMonth('fecha', Carbon::now()->month)
+                    ->whereYear('fecha', Carbon::now()->year);
+                break;
+
+            case 'rango':
+                if ($request->filled('desde') && $request->filled('hasta')) {
+                    $query->whereBetween('fecha', [$request->desde, $request->hasta]);
+                }
+                break;
+
+            default:
+                // HOY por defecto
+                $query->whereDate('fecha', Carbon::today());
+        }
+
+        // filtro método de pago
+        if ($request->filled('metodo_pago')) {
+            $query->where('metodo_pago', $request->metodo_pago);
+        }
+
+        $ventas = $query->get();
+
         return view('ventas.index', compact('ventas'));
     }
+
 
     public function show($id)
     {
@@ -39,72 +77,73 @@ class VentaController extends Controller
      * Guarda una nueva venta y sus detalles.
      */
     public function store(Request $request)
-{
-    // Decodificar productos enviados desde el formulario
-    $productos = json_decode($request->input('productos'), true);
+    {
+        // Decodificar productos enviados desde el formulario
+        $productos = json_decode($request->input('productos'), true);
 
-    if (empty($productos)) {
-        return back()->with('error', 'No se agregaron productos a la venta.');
-    }
-
-    DB::beginTransaction();
-
-    try {
-        // Crear la venta principal
-        $venta = Venta::create([
-            'fecha' => now(),
-            'cliente' => $request->cliente ?? 'Cliente general',
-            'total' => 0,
-            'estado' => 'activa',
-        ]);
-
-        $total = 0;
-
-        // Procesar cada producto de la venta
-        foreach ($productos as $p) {
-            $producto = Producto::find($p['id']);
-
-            if (!$producto) {
-                DB::rollBack();
-                return back()->with('error', "El producto con ID {$p['id']} no existe.");
-            }
-
-            // Validar stock suficiente
-            if ($producto->stock < $p['cantidad']) {
-                DB::rollBack();
-                return back()->with('error', "El producto '{$producto->nombre}' no tiene suficiente stock.");
-            }
-
-            // Calcular subtotal y actualizar stock
-            $subtotal = $p['precio'] * $p['cantidad'];
-            $total += $subtotal;
-
-            $producto->decrement('stock', $p['cantidad']);
-
-            // Crear el detalle de la venta
-            DetalleVenta::create([
-                'venta_id' => $venta->id,
-                'producto_id' => $producto->id,
-                'cantidad' => $p['cantidad'],
-                // Asegúrate que el campo exista en tu tabla:
-                'precio_unitario' => $p['precio'],
-                'subtotal' => $subtotal,
-            ]);
+        if (empty($productos)) {
+            return back()->with('error', 'No se agregaron productos a la venta.');
         }
 
-        // Actualizar el total en la venta
-        $venta->update(['total' => $total]);
+        DB::beginTransaction();
 
-        DB::commit();
-        return redirect()
-            ->route('ventas.index')
-            ->with('success', '✅ Venta registrada correctamente.');
+        try {
+            // Crear la venta principal
+            $venta = Venta::create([
+                'fecha' => now(),
+                'cliente' => $request->cliente ?? 'Cliente general',
+                'total' => 0,
+                'metodo_pago' => $request->metodo_pago,
+                'estado' => 'activa',
+            ]);
 
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Ocurrió un error al registrar la venta: ' . $e->getMessage());
+            $total = 0;
+
+            // Procesar cada producto de la venta
+            foreach ($productos as $p) {
+                $producto = Producto::find($p['id']);
+
+                if (!$producto) {
+                    DB::rollBack();
+                    return back()->with('error', "El producto con ID {$p['id']} no existe.");
+                }
+
+                // Validar stock suficiente
+                if ($producto->stock < $p['cantidad']) {
+                    DB::rollBack();
+                    return back()->with('error', "El producto '{$producto->nombre}' no tiene suficiente stock.");
+                }
+
+                // Calcular subtotal y actualizar stock
+                $subtotal = $p['precio'] * $p['cantidad'];
+                $total += $subtotal;
+
+                $producto->decrement('stock', $p['cantidad']);
+
+                // Crear el detalle de la venta
+                DetalleVenta::create([
+                    'venta_id' => $venta->id,
+                    'producto_id' => $producto->id,
+                    'cantidad' => $p['cantidad'],
+                    // Asegúrate que el campo exista en tu tabla:
+                    'precio_unitario' => $p['precio'],
+                    'subtotal' => $subtotal,
+                ]);
+            }
+
+            // Actualizar el total en la venta
+            $venta->update(['total' => $total]);
+
+            DB::commit();
+            return redirect()
+                ->route('ventas.index')
+                ->with('success', '✅ Venta registrada correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Ocurrió un error al registrar la venta: ' . $e->getMessage());
+        }
     }
-}
 
 
 
@@ -136,7 +175,7 @@ class VentaController extends Controller
 
         DB::commit();
         return back()->with('success', 'Venta revocada correctamente.');
-        
+
     } catch (\Exception $e) {
         DB::rollBack();
         return back()->withErrors(['error' => $e->getMessage()]);

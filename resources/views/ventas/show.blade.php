@@ -6,9 +6,10 @@
 <div class="container">
     <h2 class="mb-3">Detalle de Venta #{{ $venta->id }}</h2>
 
-    <p><strong>Cliente:</strong> {{ $venta->cliente ?? '—' }}</p>
+    <p><strong>Cliente:</strong> {{ $venta->cliente ?? 'Cliente general' }}</p>
     <p><strong>Total:</strong> ${{ number_format($venta->total, 2) }}</p>
     <p><strong>Fecha:</strong> {{ $venta->created_at->format('d/m/Y H:i') }}</p>
+    <p><strong>Método de pago:</strong> {{ ucfirst($venta->metodo_pago) }}</p>
 
     @if ($venta->estado === 'revocada')
     <div class="alert alert-warning border rounded shadow-sm mt-3">
