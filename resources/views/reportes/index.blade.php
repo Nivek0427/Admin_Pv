@@ -50,7 +50,7 @@
     <div class="col-md-12 d-flex align-items-end gap-2 mt-2">
         <button class="btn btn-primary w-25"
                 style="background-color:#FFD700; color:#000; font-weight:bold;">Filtrar</button>
-        <a href="{{ route('reportes.index') }}" class="btn btn-secondary w-25">Limpiar</a>
+        <a href="{{ route('reportes.index') }}" class="btn btn-secondary w-25" style="margin-left: 10px;">Limpiar</a>
     </div>
 </form>
 
@@ -69,7 +69,7 @@
     </div>
 
     <table class="table table-bordered table-striped">
-        <thead>
+        <thead class="table-dark">
             <tr>
                 <th>ID</th>
                 <th>Cliente</th>
