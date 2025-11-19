@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\InventarioMovimiento;
+use Illuminate\Support\Facades\Auth;
 
 class Producto extends Model
 {
@@ -42,4 +44,18 @@ class Producto extends Model
         $this->stock += $cantidad;
         $this->save();
     }
+
+    public function registrarMovimiento(int $cantidad, string $tipo, ?int $usuarioId = null)
+    {
+        $usuarioId = $usuarioId ?? Auth::id();
+
+        return InventarioMovimiento::create([
+            'producto_id' => $this->id,
+            'cantidad' => $cantidad,
+            'tipo' => $tipo,
+            'usuario_id' => $usuarioId,
+        ]);
+    }
+
+
 }

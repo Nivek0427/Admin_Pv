@@ -23,6 +23,9 @@ class InventarioController extends Controller
         $producto = Producto::findOrFail($id);
         $producto->stock += $request->cantidad;
         $producto->save();
+        $tipo = $request->cantidad > 0 ? 'entrada' : 'salida';
+        $producto->registrarMovimiento($request->cantidad, $tipo);
+
 
         return redirect()
             ->route('inventario.index')

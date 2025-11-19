@@ -8,6 +8,7 @@ use App\Http\Controllers\ReporteController;
 use App\Models\Venta;
 use App\Models\Producto;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\InventarioMovimientoController;
 
 Auth::routes();
 
@@ -45,6 +46,8 @@ Route::middleware(['auth'])->group(function () {
     // Inventario
     Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index')->middleware('can:inventario');
     Route::post('/inventario/{id}/actualizar', [InventarioController::class, 'updateCantidad'])->name('inventario.updateCantidad');
+    Route::get('/inventario/movimientos', [InventarioMovimientoController::class, 'index'])
+    ->name('inventario.movimientos');
 
     // Ventas
     Route::resource('ventas', VentaController::class);

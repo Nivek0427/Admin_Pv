@@ -119,6 +119,8 @@ class VentaController extends Controller
                 $total += $subtotal;
 
                 $producto->decrement('stock', $p['cantidad']);
+                $producto->registrarMovimiento(-$p['cantidad'], 'venta');
+
 
                 // Crear el detalle de la venta
                 DetalleVenta::create([
@@ -164,6 +166,9 @@ class VentaController extends Controller
         // Restaurar stock
         foreach ($venta->detalles as $detalle) {
             $detalle->producto->increment('stock', $detalle->cantidad);
+        }
+        foreach ($venta->detalles as $detalle) {
+            $detalle->producto->registrarMovimiento($detalle->cantidad, 'revocacion');
         }
 
         // Guardar fecha y motivo

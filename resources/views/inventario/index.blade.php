@@ -5,6 +5,11 @@
 @section('content')
 <div class="container-fluid">
   <h1 class="mb-4">Inventario de Productos</h1>
+  <div class="mb-3">
+    <a href="{{ route('inventario.movimientos') }}" class="btn btn-primary">
+        Historial de Movimientos
+    </a>
+</div>
 
   @if(session('success'))
     <div class="alert alert-success">
