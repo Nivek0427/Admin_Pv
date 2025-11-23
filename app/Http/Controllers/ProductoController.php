@@ -60,10 +60,10 @@ class ProductoController extends Controller
     {
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
-            'categoria' => 'nullable|string|max:255',
+            'categoria' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'precio' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'genero' => 'required|string|max:255',
         ]);
 
         $producto->update($validated);

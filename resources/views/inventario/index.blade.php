@@ -22,6 +22,7 @@
       <tr>
         <th>Producto</th>
         <th>Categoría</th>
+        <th>Género</th>
         <th>Stock disponible</th>
         <th>Actualizar stock</th>
       </tr>
@@ -31,6 +32,7 @@
       <tr>
         <td>{{ $p->nombre }}</td>
         <td>{{ $p->categoria }}</td>
+        <td>{{ $p->genero }}</td>
         <td>{{ $p->stock }}</td>
         <td>
           <form action="{{ route('inventario.updateCantidad', $p->id) }}" method="POST" class="d-inline">

@@ -25,10 +25,25 @@
             <input type="text" name="nombre" class="form-control" value="{{ old('nombre') }}" required>
         </div>
 
-        <div class="form-group mt-3">
-            <label for="categoria">Categoría</label>
-            <input type="text" name="categoria" class="form-control" value="{{ old('categoria') }}">
+        <div class="mb-3">
+            <label class="form-label">Categoria</label>
+            <select name="categoria" class="form-control" required>
+                <option value="">Seleccione...</option>
+                <option value="Ropa">Ropa</option>
+                <option value="Accesorio">Accesorio</option>
+            </select>
         </div>
+
+        <div class="mb-3">
+            <label class="form-label">Género</label>
+            <select name="genero" class="form-control" required>
+                <option value="">Seleccione...</option>
+                <option value="Hombre">Hombre</option>
+                <option value="Mujer">Mujer</option>
+                <option value="Unisex">Unisex</option>
+            </select>
+        </div>
+
 
         <div class="form-group mt-3">
             <label for="descripcion">Descripción</label>

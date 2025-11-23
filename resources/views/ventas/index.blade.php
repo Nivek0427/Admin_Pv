@@ -23,7 +23,8 @@
 
             <div class="col-auto">
                 <select name="tipo" class="form-control" onchange="this.form.submit()">
-                    <option value="">Hoy</option>
+                    <option value="">-- Filtro rápido --</option>
+                    <option value="dia" {{request('tipo')=='dia'? 'selected':''}}>Hoy</option>
                     <option value="ayer" {{ request('tipo')=='ayer' ? 'selected' : '' }}>Ayer</option>
                     <option value="semana" {{ request('tipo')=='semana' ? 'selected' : '' }}>Esta semana</option>
                     <option value="mes" {{ request('tipo')=='mes' ? 'selected' : '' }}>Este mes</option>
@@ -57,6 +58,30 @@
 
         </form>
     </div>
+
+    <form action="{{ route('ventas.index') }}" method="GET" class="mb-3">
+        {{-- Mantener filtros existentes --}}
+        <input type="hidden" name="tipo" value="{{ request('tipo') }}">
+        <input type="hidden" name="metodo_pago" value="{{ request('metodo_pago') }}">
+        <input type="hidden" name="desde" value="{{ request('desde') }}">
+        <input type="hidden" name="hasta" value="{{ request('hasta') }}">
+
+        <div class="input-group">
+            <input type="text" name="buscar" class="form-control"
+                placeholder="Buscar por cliente, ID, total o estado..."
+                value="{{ request('buscar') }}">
+
+            <button class="btn btn-primary ms-2" type="submit">Buscar</button>
+
+            @if(request('buscar'))
+                <a href="{{ route('ventas.index') }}" class="btn btn-secondary">
+                    Limpiar
+                </a>
+            @endif
+        </div>
+    </form>
+
+
 
     <table class="table table-bordered">
         <thead class="table-dark">

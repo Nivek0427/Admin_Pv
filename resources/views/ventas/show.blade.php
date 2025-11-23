@@ -29,6 +29,7 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Producto</th>
+                        <th>Género</th>
                         <th>Cantidad</th>
                         <th>Precio unitario</th>
                         <th>Subtotal</th>
@@ -38,6 +39,7 @@
                     @foreach($venta->detalles as $detalle)
                         <tr>
                             <td>{{ $detalle->producto->nombre }}</td>
+                            <td>{{ $detalle->producto->genero }}</td>
                             <td>{{ $detalle->cantidad }}</td>
                             <td>${{ number_format($detalle->precio_unitario, 2) }}</td>
                             <td>${{ number_format($detalle->subtotal, 2) }}</td>

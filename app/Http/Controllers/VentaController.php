@@ -22,6 +22,9 @@ class VentaController extends Controller
         $tipo = $request->get('tipo');
 
         switch ($tipo) {
+            case 'dia':
+                $query->whereDate('fecha', Carbon::today());
+                break;
             case 'ayer':
                 $query->whereDate('fecha', Carbon::yesterday());
                 break;
@@ -43,12 +46,25 @@ class VentaController extends Controller
 
             default:
                 // HOY por defecto
-                $query->whereDate('fecha', Carbon::today());
+                if (!$request->filled('buscar')) {
+                    $query->whereDate('fecha', Carbon::today());
+                }
         }
 
         // filtro método de pago
         if ($request->filled('metodo_pago')) {
-            $query->where('metodo_pago', $request->metodo_pago);
+                $query->where('metodo_pago', $request->metodo_pago);
+            }
+
+            if ($request->filled('buscar')) {
+            $busqueda = $request->buscar;
+
+            $query->where(function ($q) use ($busqueda) {
+                $q->where('cliente', 'LIKE', '%' . $busqueda . '%')
+                ->orWhere('id', $busqueda)
+                ->orWhere('total', 'LIKE', '%' . $busqueda . '%')
+                ->orWhere('estado', 'LIKE', '%' . $busqueda . '%');
+            });
         }
 
         $ventas = $query->get();

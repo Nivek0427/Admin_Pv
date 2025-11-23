@@ -30,6 +30,7 @@
                         <th>ID</th>
                         <th>Nombre</th>
                         <th>Categoría</th>
+                        <th>Género</th>
                         <th>Precio</th>
                         <th>Stock</th>
                         @can('acciones')
@@ -43,6 +44,7 @@
                             <td>{{ $producto->id }}</td>
                             <td>{{ $producto->nombre }}</td>
                             <td>{{ $producto->categoria ?? '—' }}</td>
+                            <td>{{ $producto->genero }}</td>
                             <td>${{ number_format($producto->precio, 2) }}</td>
                             <td>{{ $producto->stock }}</td>
                             @can('acciones')

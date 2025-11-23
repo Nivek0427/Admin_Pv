@@ -45,6 +45,7 @@
             <thead class="table-dark">
                 <tr>
                     <th>Producto</th>
+                    <th>Género</th>
                     <th>Cantidad</th>
                     <th>Tipo</th>
                     <th>Usuario</th>
@@ -55,6 +56,7 @@
                 @foreach($movimientos as $mov)
                     <tr>
                         <td>{{ $mov->producto->nombre }}</td>
+                        <td>{{ $mov->producto->genero }}</td>
                         <td>{{ $mov->cantidad }}</td>
                         <td>{{ $mov->tipo }}</td>
                         <td>{{ $mov->usuario->name }}</td>

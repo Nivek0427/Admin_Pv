@@ -105,6 +105,7 @@
                 <thead>
                     <tr>
                         <th>Producto</th>
+                        <th>Género</th>
                         <th style="width:15%" class="text-right">Unidades</th>
                     </tr>
                 </thead>
@@ -112,6 +113,7 @@
                     @foreach($productosVendidos as $producto => $cantidad)
                         <tr>
                             <td>{{ $producto }}</td>
+                            <td>{{ $productosGeneros[$producto] ?? '-' }}</td>
                             <td class="text-right">{{ number_format($cantidad, 0, ',', '.') }}</td>
                         </tr>
                     @endforeach

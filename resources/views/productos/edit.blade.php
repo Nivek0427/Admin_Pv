@@ -19,9 +19,24 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Categoría</label>
-          <input type="text" name="categoria" class="form-control" value="{{ $producto->categoria }}">
+            <label class="form-label">Categoria</label>
+            <select name="categoria" class="form-control" required>
+                <option value="">Seleccione...</option>
+                <option value="Ropa" {{$producto->categoria == 'Ropa'?'selected':''}}>Ropa</option>
+                <option value="Accesorio" {{$producto->categoria == 'Accesorio'?'selected':''}}>Accesorio</option>
+            </select>
         </div>
+
+        <div class="mb-3">
+            <label class="form-label">Género</label>
+            <select name="genero" class="form-control" required>
+                <option value="">Seleccione...</option>
+                <option value="Hombre" {{ $producto->genero == 'Hombre' ? 'selected' : '' }}>Hombre</option>
+                <option value="Mujer" {{ $producto->genero == 'Mujer' ? 'selected' : '' }}>Mujer</option>
+                <option value="Unisex" {{ $producto->genero == 'Unisex' ? 'selected' : '' }}>Unisex</option>
+            </select>
+        </div>
+
 
         <div class="mb-3">
           <label class="form-label">Descripción</label>
