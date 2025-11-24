@@ -32,7 +32,7 @@
                         <th>Categoría</th>
                         <th>Género</th>
                         <th>Precio</th>
-                        <th>Stock</th>
+                        @can('productos.verstock')<th>Stock</th>@endcan
                         @can('acciones')
                         <th>Acciones</th>
                         @endcan
@@ -46,7 +46,7 @@
                             <td>{{ $producto->categoria ?? '—' }}</td>
                             <td>{{ $producto->genero }}</td>
                             <td>${{ number_format($producto->precio, 2) }}</td>
-                            <td>{{ $producto->stock }}</td>
+                            @can('productos.verstock')<td>{{ $producto->stock }}</td>@endcan
                             @can('acciones')
                             <td>
                                 @can('productos.edit')

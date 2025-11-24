@@ -54,11 +54,15 @@
     </div>
 </form>
 
-<div class="mb-3 text-end">
-    <a href="{{ route('reportes.pdf', request()->query()) }}" class="btn btn-danger">
-        <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
-    </a>
-</div>
+<form action="{{ route('reportes.pdf') }}" method="GET" target="_blank">
+    <input type="hidden" name="tipo" value="{{ request('tipo') }}">
+    <input type="hidden" name="estado" value="{{ request('estado') }}">
+    <input type="hidden" name="metodo_pago" value="{{ request('metodo_pago') }}">
+    <input type="hidden" name="desde" value="{{ request('desde') }}">
+    <input type="hidden" name="hasta" value="{{ request('hasta') }}">
+
+    <button class="btn btn-danger mb-3">Generar PDF</button>
+</form>
 
 
     <div class="alert alert-info"

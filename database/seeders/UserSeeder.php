@@ -48,6 +48,11 @@ class UserSeeder extends Seeder
             'name' => 'ventas.revocar',
             'guard_name' => 'web'
         ]);
+        //permiso productos.verstock
+        $permViewStock = Permission::firstOrCreate([
+            'name' => 'productos.verstock',
+            'guard_name' => 'web'
+        ]);
 
         //endregion
 
@@ -69,6 +74,7 @@ class UserSeeder extends Seeder
         $adminRole->givePermissionTo($permProductoDelete);
         $adminRole->givePermissionTo($permActions);
         $adminRole->givePermissionTo($permVentasRevocar);
+        $adminRole->givePermissionTo($permViewStock);
         //endregion
 
         //region usuarios
