@@ -26,11 +26,15 @@
                             data-nombre="{{ $producto->nombre }}"
                             data-precio="{{ $producto->precio }}"
                             data-stock="{{ $producto->stock }}">
-                            {{ $producto->nombre }} (Stock: {{ $producto->stock }})
+                            {{ $producto->nombre }}
                         </option>
                     @endforeach
                 </select>
-                <small id="stock-info" class="text-muted d-block mt-2">Stock disponible: 0</small>
+                @can('productos.verstock')
+                    <small id="stock-info" class="text-muted d-block mt-2">Stock disponible: 0</small>
+                @else
+                    <small id="stock-info" class="d-none"></small>
+                @endcan
             </div>
 
             <div class="col-md-2">
@@ -45,7 +49,7 @@
             </div>
 
             <div class="col-md-3">
-                <label for="metodo_pago" class="form-label">Método de pago</label>
+                <label for="metodo_pago" class="form-label mt-3">Método de pago</label>
                 <select name="metodo_pago" id="metodo_pago" class="form-control" required>
                     <option value="">Seleccione...</option>
                     <option value="efectivo">Efectivo</option>
