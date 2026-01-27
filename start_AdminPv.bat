@@ -1,3 +1,3 @@
 @echo off
-cd /d C:\Users\Alexis\Desktop\Admin_PV
+cd /d C:\Admin_Pv
 php artisan serve
