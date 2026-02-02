@@ -25,6 +25,12 @@ class Venta extends Model
         'revocada_fecha' => 'datetime',
     ];
 
+    public function getMetodoPagoAttribute($value)
+{
+    return $value ?? 'efectivo';
+}
+
+
     /**
      * Una venta tiene muchos detalles de venta.
      */

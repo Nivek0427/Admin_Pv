@@ -23,20 +23,52 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', function () {
 
-        $ventasHoy = Venta::whereDate('fecha', today())
-                            ->where('estado', 'activa')
-                            ->count();
+    $ventasHoy = Venta::whereDate('fecha', today())
+        ->where('estado', 'activa')
+        ->count();
 
-        $totalHoy = Venta::whereDate('fecha', today())
-                            ->where('estado', 'activa')
-                            ->sum('total');
+    $totalEfectivo = Venta::whereDate('fecha', today())
+        ->where('estado', 'activa')
+        ->where(function ($q) {
+            $q->where('metodo_pago', 'efectivo')
+              ->orWhereNull('metodo_pago');
+        })
+        ->sum('total');
 
-        $productosBajoStock = Producto::where('stock', '<', 10)->count();
+    $totalTransferencia = Venta::whereDate('fecha', today())
+        ->where('estado', 'activa')
+        ->where('metodo_pago', 'transferencia')
+        ->sum('total');
 
-        $ultimasVentas = Venta::orderBy('fecha', 'desc')->take(5)->get();
+    $totalFiado = Venta::whereDate('fecha', today())
+        ->where('estado', 'activa')
+        ->where('metodo_pago', 'fiado')
+        ->sum('total');
 
-        return view('dashboard', compact('ventasHoy', 'totalHoy', 'productosBajoStock', 'ultimasVentas'));
-    })->name('dashboard');
+    $totalTarjeta = Venta::whereDate('fecha', today())
+        ->where('estado', 'activa')
+        ->where('metodo_pago', 'tarjeta')
+        ->sum('total');
+
+    $totalSisteCredito = Venta::whereDate('fecha', today())
+        ->where('estado', 'activa')
+        ->where('metodo_pago', 'sistecredito')
+        ->sum('total');
+
+    $productosBajoStock = Producto::where('stock', '<', 10)->count();
+
+    $ultimasVentas = Venta::orderBy('fecha', 'desc')->take(5)->get();
+
+    return view('dashboard', compact(
+        'ventasHoy',
+        'totalEfectivo',
+        'totalTransferencia',
+        'totalTarjeta',
+        'totalSisteCredito',
+        'ultimasVentas'
+    ));
+})->name('dashboard');
+
 
     // Productos
     Route::resource('productos', ProductoController::class);

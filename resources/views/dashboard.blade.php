@@ -7,31 +7,60 @@
 
     <div class="card shadow-sm p-4">
 
-        <!-- Tarjetas -->
-        <div class="row">
+       <!-- Tarjetas -->
+<div class="row g-3">
 
-            <div class="col-md-4">
-                <div class="card-frstore p-4 text-center">
-                    <h5>Total de ventas del día</h5>
-                    <h2>${{ number_format($totalHoy, 0, ',', '.') }}</h2>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card-frstore-dark p-4 text-center">
-                    <h5>Cantidad de ventas</h5>
-                    <h2>{{ $ventasHoy }}</h2>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card-frstore p-4 text-center">
-                    <h5>Productos con bajo stock</h5>
-                    <h2>{{ $productosBajoStock }}</h2>
-                </div>
-            </div>
-
+    <!-- Ventas en efectivo -->
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card-frstore p-3 text-center h-100">
+            <h6>Ventas en efectivo</h6>
+            <h4 class="mt-2">
+                ${{ number_format($totalEfectivo, 0, ',', '.') }}
+            </h4>
         </div>
+    </div>
+
+    <!-- Ventas por transferencia -->
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card-frstore-dark p-3 text-center h-100">
+            <h6>Transferencia</h6>
+            <h4 class="mt-2">
+                ${{ number_format($totalTransferencia, 0, ',', '.') }}
+            </h4>
+        </div>
+    </div>
+
+    <!-- Ventas por tarjeta -->
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card-frstore p-3 text-center h-100">
+            <h6>Tarjeta</h6>
+            <h4 class="mt-2">
+                ${{ number_format($totalTarjeta, 0, ',', '.') }}
+            </h4>
+        </div>
+    </div>
+
+    <!-- Ventas por SisteCredito -->
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card-frstore-dark p-3 text-center h-100">
+            <h6>SisteCrédito</h6>
+            <h4 class="mt-2">
+                ${{ number_format($totalSisteCredito, 0, ',', '.') }}
+            </h4>
+        </div>
+    </div>
+
+    <!-- Cantidad de ventas -->
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card-frstore p-3 text-center h-100">
+            <h6># Ventas</h6>
+            <h4 class="mt-2">{{ $ventasHoy }}</h4>
+        </div>
+    </div>
+
+</div>
+
+
 
 
         <!-- Últimas Ventas -->
@@ -48,14 +77,16 @@
                         <th>Fecha</th>
                         <th>Total</th>
                         <th>Estado</th>
+                        <th>Método de Pago</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($ultimasVentas as $venta)
                         <tr>
                             <td>{{ $venta->fecha }}</td>
-                            <td>${{ number_format($venta->total, 2) }}</td>
+                            <td>${{ number_format($venta->total, 0, ',', '.') }}</td>
                             <td>{{ ucfirst($venta->estado) }}</td>
+                            <td>{{ ucfirst($venta->metodo_pago) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
