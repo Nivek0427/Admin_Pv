@@ -9,10 +9,36 @@
     <form action="{{ route('ventas.store') }}" method="POST" id="ventaForm">
         @csrf
 
-        <div class="mb-3">
-            <label for="cliente" class="form-label">Nombre del cliente</label>
-            <input type="text" name="cliente" id="cliente" class="form-control" placeholder="Ej: Juan Pérez">
+       <div class="row mb-3">
+
+        <div class="col-md-6">
+            <label for="cliente" class="form-label">Cliente</label>
+            <input
+                type="text"
+                name="cliente"
+                id="cliente"
+                class="form-control"
+                placeholder="Juan Pérez"
+            >
         </div>
+
+        @role('admin')
+        <div class="col-md-3">
+            <label for="fecha" class="form-label">Fecha</label>
+            <input
+                type="date"
+                name="fecha"
+                id="fecha"
+                class="form-control"
+                value="{{ now()->toDateString() }}"
+                max="{{ now()->toDateString() }}"
+            >
+        </div>
+        @endrole
+
+    </div>
+
+
 
         <!-- Selección de producto -->
         <div class="row mb-3">
@@ -48,6 +74,8 @@
                 <input type="number" id="precio" class="form-control">
             </div>
 
+
+
             <div class="col-md-3">
                 <label for="metodo_pago" class="form-label mt-3">Método de pago</label>
                 <select name="metodo_pago" id="metodo_pago" class="form-control" required>
@@ -56,10 +84,22 @@
                     <option value="transferencia">Transferencia</option>
                     <option value="tarjeta">Tarjeta</option>
                     <option value="sistecredito">Sistecrédito</option>
+                    <option value="Fiado">Fiado</option>
                 </select>
             </div>
 
-            <div class="col-md-3 d-flex align-items-end">
+            <div class="col-md-3" id="banco_container" style="display:none">
+                <label class="form-label mt-3">Banco</label>
+                <select name="banco_id" class="form-control">
+                    <option value="">Seleccione banco</option>
+                    @foreach($bancos as $banco)
+                        <option value="{{ $banco->id }}">{{ $banco->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+
+            <div class="col-md-2 d-flex align-items-end">
                 <button type="button" id="agregar" class="btn btn-success w-100">
                     <i class="fas fa-plus"></i> Agregar
                 </button>
@@ -207,6 +247,14 @@ document.addEventListener('DOMContentLoaded', function() {
         productos.splice(index, 1);
         renderTabla();
     };
+
+    const metodoPago = document.getElementById('metodo_pago');
+    const bancoContainer = document.getElementById('banco_container');
+
+    metodoPago.addEventListener('change', function () {
+        bancoContainer.style.display = this.value === 'transferencia' ? 'block' : 'none';
+    });
+
 });
 </script>
 @endsection

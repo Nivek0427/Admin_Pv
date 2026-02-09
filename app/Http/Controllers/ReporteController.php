@@ -79,31 +79,44 @@ class ReporteController extends Controller
         $estado = $request->input('estado');
 
         $query = Venta::query()->with('detalles.producto');
+        $hayFiltros = false;
+
 
         // Filtro por rango (fecha)
         if ($request->filled('desde') && $request->filled('hasta')) {
             $query->whereBetween('fecha', [$request->desde, $request->hasta]);
+            $hayFiltros = true;
         }
         // Filtros rápidos
         elseif ($tipo === 'dia') {
             $query->whereDate('fecha', Carbon::today());
+            $hayFiltros = true;
         } elseif ($tipo === 'semana') {
             $query->whereBetween('fecha', [
                 Carbon::now()->startOfWeek(),
                 Carbon::now()->endOfWeek()
             ]);
+            $hayFiltros = true;
         } elseif ($tipo === 'mes') {
             $query->whereMonth('fecha', Carbon::now()->month);
+            $hayFiltros = true;
         }
 
         // Filtro por estado
         if ($estado === 'activa' || $estado === 'revocada') {
             $query->where('estado', $estado);
+            $hayFiltros = true;
         }
 
         // Filtro por método de pago
         if ($request->filled('metodo_pago')) {
             $query->where('metodo_pago', $request->metodo_pago);
+            $hayFiltros = true;
+        }
+        // Si no hay filtros, mostrar solo ventas del día por defecto
+        if (!$hayFiltros) {
+            $query->whereDate('fecha', Carbon::today());
+            $tipo = 'dia';
         }
 
         $ventas = $query->orderBy('fecha', 'desc')->get();

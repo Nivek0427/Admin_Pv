@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Venta;
 use App\Models\Producto;
 use App\Models\DetalleVenta;
+use App\Models\Banco;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -86,7 +87,8 @@ class VentaController extends Controller
     public function create()
     {
         $productos = Producto::all();
-        return view('ventas.create', compact('productos'));
+        $bancos = Banco::all();
+        return view('ventas.create', compact('productos', 'bancos'));
     }
 
     /**
@@ -94,6 +96,20 @@ class VentaController extends Controller
      */
     public function store(Request $request)
     {
+        // Validar datos básicos de la venta
+        $request->validate([
+            'metodo_pago' => 'required',
+            'banco_id' => 'required_if:metodo_pago,transferencia'
+        ]);
+
+        // Solo los admin pueden establecer la fecha de la venta
+        if (auth()->user()->hasRole('admin')) {
+        $request->validate([
+            'fecha' => 'nullable|date|before_or_equal:today',
+        ]);
+}
+
+
         // Decodificar productos enviados desde el formulario
         $productos = json_decode($request->input('productos'), true);
 
@@ -105,11 +121,21 @@ class VentaController extends Controller
 
         try {
             // Crear la venta principal
+
+            $fechaVenta = now();
+
+            if(auth()->user()->hasRole('admin') && $request->filled('fecha')) {
+                $fechaVenta = Carbon::parse($request->fecha);
+            }
+
             $venta = Venta::create([
-                'fecha' => now(),
+                'fecha' => $fechaVenta,
                 'cliente' => $request->cliente ?? 'Cliente general',
                 'total' => 0,
                 'metodo_pago' => $request->metodo_pago,
+                'banco_id' => $request->metodo_pago === 'transferencia'
+                    ? $request->banco_id
+                    : null,
                 'estado' => 'activa',
             ]);
 

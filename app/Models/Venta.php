@@ -46,4 +46,15 @@ class Venta extends Model
     {
         return $this->detalles->sum('subtotal');
     }
+
+    public function banco()
+    {
+        return $this->belongsTo(Banco::class);
+    }
+
+    public function esFiado()
+    {
+        return $this->metodo_pago === 'Fiado';
+    }
+
 }

@@ -53,7 +53,7 @@
     <!-- Cantidad de ventas -->
     <div class="col-lg-2 col-md-4 col-sm-6">
         <div class="card-frstore p-3 text-center h-100">
-            <h6># Ventas</h6>
+            <h6># Ventas del día</h6>
             <h4 class="mt-2">{{ $ventasHoy }}</h4>
         </div>
     </div>
