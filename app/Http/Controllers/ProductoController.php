@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Producto;
+use App\Models\ProductoTalla;
+use App\Models\Talla;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ProductoController extends Controller
 {
@@ -17,7 +21,9 @@ class ProductoController extends Controller
     // Mostrar formulario de creación
     public function create()
     {
-        return view('productos.create');
+        $tallas = Talla::orderBy('numero')->get();
+
+        return view('productos.create', compact('tallas'));
     }
 
     // Guardar producto nuevo
@@ -27,17 +33,45 @@ class ProductoController extends Controller
         'nombre' => 'required|string|max:255',
         'precio' => 'required|numeric|min:0',
         'categoria' => 'nullable|string|max:255',
+        'stock' => 'nullable|integer|min:0',
+        'tallas' => 'nullable|array',
+        'tallas.*' => 'integer|distinct|exists:tallas,id',
+        'stock_tallas' => 'nullable|array',
     ]);
 
-    $producto = Producto::create($request->all());
+    $tallasSeleccionadas = $this->validarTallas($request);
 
-    // 🔹 Crear registro inicial en inventario automáticamente
-    \App\Models\Inventario::create([
-        'producto_id' => $producto->id,
-        'cantidad' => $producto->stock,
-        'tipo_movimiento' => 'Creación',
-        'descripcion' => 'Registro automático al crear producto'
-    ]);
+    $producto = DB::transaction(function () use ($request, $tallasSeleccionadas) {
+        $esZapato = $request->input('categoria') === 'Zapatos';
+        $stock = $esZapato
+            ? collect($tallasSeleccionadas)->sum('stock')
+            : $request->input('stock', 0);
+
+        $producto = Producto::create(array_merge(
+            $request->only(['nombre', 'categoria', 'descripcion', 'precio', 'genero']),
+            ['stock' => $stock]
+        ));
+
+        if ($esZapato) {
+            foreach ($tallasSeleccionadas as $talla) {
+                ProductoTalla::create([
+                    'producto_id' => $producto->id,
+                    'talla_id' => $talla['talla_id'],
+                    'stock' => $talla['stock'],
+                ]);
+            }
+        }
+
+        // Crear registro inicial en inventario automáticamente.
+        \App\Models\Inventario::create([
+            'producto_id' => $producto->id,
+            'cantidad' => $producto->stock,
+            'tipo_movimiento' => 'Creación',
+            'descripcion' => 'Registro automático al crear producto'
+        ]);
+
+        return $producto;
+    });
 
     return redirect()->route('productos.index')
         ->with('success', 'Producto creado correctamente y registrado en inventario.');
@@ -52,7 +86,10 @@ class ProductoController extends Controller
     // Mostrar formulario de edición
     public function edit(Producto $producto)
     {
-        return view('productos.edit', compact('producto'));
+        $tallas = Talla::orderBy('numero')->get();
+        $producto->load('productoTallas');
+
+        return view('productos.edit', compact('producto', 'tallas'));
     }
 
     // Actualizar producto
@@ -64,9 +101,40 @@ class ProductoController extends Controller
             'descripcion' => 'nullable|string',
             'precio' => 'required|numeric|min:0',
             'genero' => 'required|string|max:255',
+            'tallas' => 'nullable|array',
+            'tallas.*' => 'integer|distinct|exists:tallas,id',
+            'stock_tallas' => 'nullable|array',
         ]);
 
-        $producto->update($validated);
+        $tallasSeleccionadas = $this->validarTallas($request);
+
+        DB::transaction(function () use ($producto, $validated, $request, $tallasSeleccionadas) {
+            $esZapato = $validated['categoria'] === 'Zapatos';
+
+            $producto->update(collect($validated)->except(['tallas', 'stock_tallas'])->all());
+
+            if (!$esZapato) {
+                $producto->productoTallas()->delete();
+                return;
+            }
+
+            $idsSeleccionados = collect($tallasSeleccionadas)->pluck('talla_id');
+
+            $producto->productoTallas()
+                ->whereNotIn('talla_id', $idsSeleccionados)
+                ->delete();
+
+            foreach ($tallasSeleccionadas as $talla) {
+                $producto->productoTallas()->updateOrCreate(
+                    ['talla_id' => $talla['talla_id']],
+                    ['stock' => $talla['stock']]
+                );
+            }
+
+            $producto->update([
+                'stock' => collect($tallasSeleccionadas)->sum('stock'),
+            ]);
+        });
 
         return redirect()->route('productos.index')->with('success', 'Producto actualizado exitosamente.');
     }
@@ -77,5 +145,33 @@ class ProductoController extends Controller
         $producto->delete();
 
         return redirect()->route('productos.index')->with('success', 'Producto eliminado correctamente.');
+    }
+
+    private function validarTallas(Request $request): array
+    {
+        if ($request->input('categoria') !== 'Zapatos') {
+            return [];
+        }
+
+        $tallas = $request->input('tallas', []);
+        $stocks = $request->input('stock_tallas', []);
+        $resultado = [];
+
+        foreach ($tallas as $tallaId) {
+            $stock = $stocks[$tallaId] ?? null;
+
+            if ($stock === null || !is_scalar($stock) || !preg_match('/^\d+$/', (string) $stock)) {
+                throw ValidationException::withMessages([
+                    "stock_tallas.{$tallaId}" => 'El stock de cada talla debe ser un entero mayor o igual a cero.',
+                ]);
+            }
+
+            $resultado[] = [
+                'talla_id' => (int) $tallaId,
+                'stock' => (int) $stock,
+            ];
+        }
+
+        return $resultado;
     }
 }

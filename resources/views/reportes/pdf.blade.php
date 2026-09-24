@@ -148,6 +148,9 @@
                         <td>
                             @foreach($v->detalles as $d)
                                 {{ $d->cantidad }} × {{ $d->producto?->nombre ?? '[producto eliminado]' }}
+                                @if($d->talla_id)
+                                    - Talla {{ $d->talla?->numero ?? '-' }}
+                                @endif
                                 @if(!$loop->last), @endif
                             @endforeach
                         </td>

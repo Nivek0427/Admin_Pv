@@ -13,7 +13,7 @@ class ReporteController extends Controller
     {
         $tipo = $request->input('tipo'); // dia, semana, mes
         $estado = $request->input('estado');
-        $ventas = Venta::query();
+        $ventas = Venta::query()->with(['detalles.producto', 'detalles.talla']);
 
         $hayFiltros = false;
 
@@ -78,7 +78,7 @@ class ReporteController extends Controller
         $tipo = $request->input('tipo');
         $estado = $request->input('estado');
 
-        $query = Venta::query()->with('detalles.producto');
+        $query = Venta::query()->with(['detalles.producto', 'detalles.talla']);
         $hayFiltros = false;
 
 
@@ -131,6 +131,7 @@ class ReporteController extends Controller
         // Total de unidades (solo activas)
         $totalProductosVendidos = 0;
         $productosVendidos = [];
+        $productosGeneros = [];
 
         foreach ($ventas as $venta) {
             if ($venta->estado === 'activa') {
@@ -147,6 +148,7 @@ class ReporteController extends Controller
                     }
 
                     $productosVendidos[$nombre] += $detalle->cantidad;
+                    $productosGeneros[$nombre] = $detalle->producto?->genero ?? '-';
                 }
             }
         }
@@ -179,6 +181,7 @@ class ReporteController extends Controller
             'totalVentas' => $totalVentas,
             'totalProductosVendidos' => $totalProductosVendidos,
             'productosVendidos' => $productosVendidos,  // << SE AGREGA
+            'productosGeneros' => $productosGeneros,
             'filtros' => $filtros,
             'logo' => $logoPath,
         ]);

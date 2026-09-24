@@ -81,6 +81,7 @@
                 <th>Total</th>
                 <th>Método de pago</th>
                 <th>Estado</th>
+                <th>Productos</th>
             </tr>
         </thead>
         <tbody>
@@ -98,9 +99,20 @@
                             <span class="badge bg-danger">Revocada</span>
                         @endif
                     </td>
+                    <td>
+                        @forelse($venta->detalles as $detalle)
+                            {{ $detalle->producto?->nombre ?? '[producto eliminado]' }}
+                            @if($detalle->talla_id)
+                                - Talla {{ $detalle->talla?->numero ?? '-' }}
+                            @endif
+                            ({{ $detalle->cantidad }})@if(!$loop->last), @endif
+                        @empty
+                            -
+                        @endforelse
+                    </td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="text-center">No hay ventas en este periodo.</td></tr>
+                <tr><td colspan="7" class="text-center">No hay ventas en este periodo.</td></tr>
             @endforelse
         </tbody>
     </table>

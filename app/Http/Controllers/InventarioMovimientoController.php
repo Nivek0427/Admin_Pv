@@ -10,7 +10,7 @@ class InventarioMovimientoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InventarioMovimiento::with(['producto', 'usuario']);
+        $query = InventarioMovimiento::with(['producto', 'talla', 'usuario']);
 
         // Filtro por rango de fechas
         if ($request->filled('fecha_desde') && $request->filled('fecha_hasta')) {

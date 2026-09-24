@@ -38,7 +38,12 @@
                 <tbody>
                     @foreach($venta->detalles as $detalle)
                         <tr>
-                            <td>{{ $detalle->producto->nombre }}</td>
+                            <td>
+                                {{ $detalle->producto->nombre }}
+                                @if($detalle->talla_id)
+                                    - Talla {{ $detalle->talla?->numero ?? '-' }}
+                                @endif
+                            </td>
                             <td>{{ $detalle->producto->genero }}</td>
                             <td>{{ $detalle->cantidad }}</td>
                             <td>${{ number_format($detalle->precio_unitario, 2) }}</td>

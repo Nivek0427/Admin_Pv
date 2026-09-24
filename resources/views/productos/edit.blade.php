@@ -3,6 +3,10 @@
 @section('title', 'Editar Producto')
 
 @section('content')
+@php
+  $tallasSeleccionadas = old('tallas', $producto->productoTallas->pluck('talla_id')->toArray());
+  $stocksTallas = old('stock_tallas', $producto->productoTallas->pluck('stock', 'talla_id')->toArray());
+@endphp
 <div class="container-fluid">
   <div class="card">
     <div class="card-header bg-warning text-dark">
@@ -20,10 +24,11 @@
 
         <div class="mb-3">
             <label class="form-label">Categoria</label>
-            <select name="categoria" class="form-control" required>
+            <select name="categoria" id="categoria" class="form-control" required>
                 <option value="">Seleccione...</option>
-                <option value="Ropa" {{$producto->categoria == 'Ropa'?'selected':''}}>Ropa</option>
-                <option value="Accesorio" {{$producto->categoria == 'Accesorio'?'selected':''}}>Accesorio</option>
+                <option value="Ropa" {{ old('categoria', $producto->categoria) == 'Ropa' ? 'selected' : '' }}>Ropa</option>
+                <option value="Accesorio" {{ old('categoria', $producto->categoria) == 'Accesorio' ? 'selected' : '' }}>Accesorio</option>
+                <option value="Zapatos" {{ old('categoria', $producto->categoria) == 'Zapatos' ? 'selected' : '' }}>Zapatos</option>
             </select>
         </div>
 
@@ -48,6 +53,41 @@
           <input type="number" name="precio" class="form-control" step="0.01" value="{{ $producto->precio }}" required>
         </div>
 
+        <div class="form-group mt-3" id="tallas-container" style="display: none;">
+          <label class="form-label">Tallas y stock</label>
+          <div class="row">
+            @foreach ($tallas as $talla)
+              @php
+                $tallaSeleccionada = in_array($talla->id, $tallasSeleccionadas);
+              @endphp
+              <div class="col-md-3 mb-3">
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input talla-checkbox"
+                    name="tallas[]"
+                    value="{{ $talla->id }}"
+                    id="talla-{{ $talla->id }}"
+                    {{ $tallaSeleccionada ? 'checked' : '' }}
+                  >
+                  <label class="form-check-label" for="talla-{{ $talla->id }}">
+                    {{ $talla->numero }}
+                  </label>
+                </div>
+                <input
+                  type="number"
+                  class="form-control mt-2 talla-stock"
+                  name="stock_tallas[{{ $talla->id }}]"
+                  value="{{ $stocksTallas[$talla->id] ?? 0 }}"
+                  min="0"
+                  step="1"
+                  {{ $tallaSeleccionada ? '' : 'disabled' }}
+                >
+              </div>
+            @endforeach
+          </div>
+        </div>
+
         <button type="submit" class="btn btn-warning">
           <i class="fas fa-save"></i> Actualizar
         </button>
@@ -58,4 +98,24 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const categoria = document.getElementById('categoria');
+  const tallasContainer = document.getElementById('tallas-container');
+
+  function actualizarTallas() {
+    tallasContainer.style.display = categoria.value === 'Zapatos' ? 'block' : 'none';
+  }
+
+  document.querySelectorAll('.talla-checkbox').forEach(function (checkbox) {
+    checkbox.addEventListener('change', function () {
+      this.closest('.form-check').nextElementSibling.disabled = !this.checked;
+    });
+  });
+
+  categoria.addEventListener('change', actualizarTallas);
+  actualizarTallas();
+});
+</script>
 @endsection
