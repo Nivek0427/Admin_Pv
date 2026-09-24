@@ -45,9 +45,9 @@ Route::middleware(['auth'])->group(function () {
         ->where('metodo_pago', 'fiado')
         ->sum('total');
 
-    $totalTarjeta = Venta::whereDate('fecha', today())
+    $totalAddi = Venta::whereDate('fecha', today())
         ->where('estado', 'activa')
-        ->where('metodo_pago', 'tarjeta')
+        ->where('metodo_pago', 'addi')
         ->sum('total');
 
     $totalSisteCredito = Venta::whereDate('fecha', today())
@@ -63,7 +63,7 @@ Route::middleware(['auth'])->group(function () {
         'ventasHoy',
         'totalEfectivo',
         'totalTransferencia',
-        'totalTarjeta',
+        'totalAddi',
         'totalSisteCredito',
         'ultimasVentas'
     ));

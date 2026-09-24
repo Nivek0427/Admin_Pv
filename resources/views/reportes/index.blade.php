@@ -41,7 +41,8 @@
             <option value="">Todos</option>
             <option value="efectivo">Efectivo</option>
             <option value="transferencia">Transferencia</option>
-            <option value="tarjeta">Tarjeta</option>
+            <option value="addi">ADDI</option>
+            <option value="tarjeta">Tarjeta (histórico)</option>
             <option value="sistecredito">Sistecrédito</option>
         </select>
     </div>

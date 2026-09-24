@@ -143,7 +143,7 @@
                             {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y H:i') }}
                         </td>
                         <td class="text-right">${{ number_format($v->total, 0, ',', '.') }}</td>
-                        <td>{{ ucfirst($v->metodo_pago) }}</td>
+                        <td>{{ $v->metodo_pago === 'addi' ? 'ADDI' : ucfirst($v->metodo_pago) }}</td>
                         <td>{{ ucfirst($v->estado) }}</td>
                         <td>
                             @foreach($v->detalles as $d)

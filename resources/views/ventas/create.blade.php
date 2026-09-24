@@ -106,8 +106,8 @@
                 <select name="metodo_pago" id="metodo_pago" class="form-control" required>
                     <option value="">Seleccione...</option>
                     <option value="efectivo">Efectivo</option>
+                    <option value="addi">ADDI</option>
                     <option value="transferencia">Transferencia</option>
-                    <option value="tarjeta">Tarjeta</option>
                     <option value="sistecredito">Sistecrédito</option>
                     <option value="Fiado">Fiado</option>
                 </select>
