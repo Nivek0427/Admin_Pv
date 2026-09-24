@@ -5,6 +5,7 @@ use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\ConfiguracionController;
 use App\Models\Venta;
 use App\Models\Producto;
 use Illuminate\Support\Facades\Auth;
@@ -91,6 +92,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reportes/pdf', [ReporteController::class, 'generarPDF'])->name('reportes.pdf');
 
 });
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('configuracion')
+    ->name('configuracion.')
+    ->group(function () {
+        Route::get('/', [ConfiguracionController::class, 'index'])->name('index');
+        Route::post('/verificar', [ConfiguracionController::class, 'verificar'])->name('verificar');
+        Route::post('/password', [ConfiguracionController::class, 'actualizarPassword'])->name('password');
+        Route::post('/usuarios/{user}/password', [ConfiguracionController::class, 'actualizarPasswordUsuario'])
+            ->name('usuarios.password');
+    });
 
 // Ruta por defecto que Laravel UI usa como "home"
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
