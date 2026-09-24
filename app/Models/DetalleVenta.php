@@ -15,6 +15,7 @@ class DetalleVenta extends Model
         'talla_id',
         'cantidad',
         'precio_unitario',
+        'costo_unitario',
         'subtotal',
     ];
 

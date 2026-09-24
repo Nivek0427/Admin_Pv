@@ -92,6 +92,13 @@
                 <input type="number" id="precio" class="form-control">
             </div>
 
+            @role('admin')
+            <div class="col-md-2">
+                <label for="costo_unitario" class="form-label">Costo unitario</label>
+                <input type="number" id="costo_unitario" class="form-control" min="0" step="0.01">
+            </div>
+            @endrole
+
 
 
             <div class="col-md-3">
@@ -132,18 +139,37 @@
                 <tr>
                     <th>Producto</th>
                     <th>Precio Unitario</th>
+                    @role('admin')
+                        <th>Costo Unitario</th>
+                    @endrole
                     <th>Cantidad</th>
                     <th>Subtotal</th>
+                    @role('admin')
+                        <th>Ganancia</th>
+                    @endrole
                     <th>Acción</th>
                 </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                    <td id="totalVenta">0.00</td>
-                    <td></td>
+                    @role('admin')
+                        <td colspan="5" class="text-end"><strong>Total:</strong></td>
+                        <td id="totalVenta">0.00</td>
+                        <td></td>
+                    @else
+                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                        <td id="totalVenta">0.00</td>
+                        <td></td>
+                    @endrole
                 </tr>
+                @role('admin')
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Ganancia total:</strong></td>
+                        <td id="gananciaTotal">0.00</td>
+                        <td></td>
+                    </tr>
+                @endrole
             </tfoot>
         </table>
 
@@ -164,6 +190,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const productoSelect = document.getElementById('producto');
     const cantidadInput = document.getElementById('cantidad');
     const precioInput = document.getElementById('precio');
+    const costoInput = document.getElementById('costo_unitario');
+    const esAdmin = @role('admin') true @else false @endrole;
     const tallaContainer = document.getElementById('talla-container');
     const tallaSelect = document.getElementById('talla_id');
     const agregarBtn = document.getElementById('agregar');
@@ -241,6 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tallaId = esZapato ? tallaSelect.value : null;
         const tallaNumero = esZapato ? tallaSelect.options[tallaSelect.selectedIndex]?.textContent.split(' - ')[0] : null;
         const precio = parseFloat(precioInput.value.replace(/\./g, '').replace(/,/g, '.'));
+        const costo = esAdmin && costoInput ? parseFloat(costoInput.value) : null;
         const cantidad = parseInt(cantidadInput.value, 10);
 
         if (!id) {
@@ -253,6 +282,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (isNaN(precio) || precio <= 0 || isNaN(cantidad) || cantidad <= 0) {
             alert('Ingrese una cantidad y precio válidos.');
+            return;
+        }
+        if (esAdmin && (costoInput.value.trim() === '' || !Number.isFinite(costo) || costo < 0)) {
+            alert('Ingrese un costo unitario válido, mayor o igual a cero.');
             return;
         }
 
@@ -269,8 +302,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (existente) {
             existente.cantidad += cantidad;
             existente.subtotal = existente.cantidad * existente.precio;
+            if (esAdmin) {
+                existente.ganancia = (existente.precio - existente.costo_unitario) * existente.cantidad;
+            }
         } else {
-            productos.push({
+            const nuevoProducto = {
                 id: parseInt(id, 10),
                 talla_id: tallaId ? parseInt(tallaId, 10) : null,
                 talla_numero: tallaNumero,
@@ -278,7 +314,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 precio,
                 cantidad,
                 subtotal: precio * cantidad
-            });
+            };
+
+            if (esAdmin) {
+                nuevoProducto.costo_unitario = costo;
+                nuevoProducto.ganancia = (precio - costo) * cantidad;
+            }
+
+            productos.push(nuevoProducto);
         }
 
         renderTabla();
@@ -287,9 +330,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTabla() {
         detalleVenta.innerHTML = '';
         let total = 0;
+        let gananciaTotal = 0;
 
         productos.forEach(function (producto, index) {
             total += producto.subtotal;
+            if (esAdmin) {
+                gananciaTotal += producto.ganancia;
+            }
             const nombre = producto.talla_numero
                 ? producto.nombre + ' - Talla ' + producto.talla_numero
                 : producto.nombre;
@@ -297,8 +344,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <tr>
                     <td>${nombre}</td>
                     <td>${producto.precio.toLocaleString('es-CO')}</td>
+                    ${esAdmin ? `<td>${producto.costo_unitario.toLocaleString('es-CO')}</td>` : ''}
                     <td>${producto.cantidad}</td>
                     <td>${producto.subtotal.toLocaleString('es-CO')}</td>
+                    ${esAdmin ? `<td>${producto.ganancia.toLocaleString('es-CO')}</td>` : ''}
                     <td>
                         <button type="button" class="btn btn-danger btn-sm" onclick="eliminar(${index})">
                             <i class="fas fa-trash"></i>
@@ -308,6 +357,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         totalVenta.textContent = total.toLocaleString('es-CO');
+        if (esAdmin) {
+            document.getElementById('gananciaTotal').textContent = gananciaTotal.toLocaleString('es-CO');
+        }
         productosInput.value = JSON.stringify(productos);
     }
 

@@ -97,6 +97,8 @@ class VentaController extends Controller
      */
     public function store(Request $request)
     {
+        $esAdmin = auth()->user()->hasRole('admin');
+
         // Validar datos básicos de la venta
         $request->validate([
             'metodo_pago' => 'required',
@@ -104,7 +106,7 @@ class VentaController extends Controller
         ]);
 
         // Solo los admin pueden establecer la fecha de la venta
-        if (auth()->user()->hasRole('admin')) {
+        if ($esAdmin) {
         $request->validate([
             'fecha' => 'nullable|date|before_or_equal:today',
         ]);
@@ -125,7 +127,7 @@ class VentaController extends Controller
 
             $fechaVenta = now();
 
-            if(auth()->user()->hasRole('admin') && $request->filled('fecha')) {
+            if($esAdmin && $request->filled('fecha')) {
                 $fechaVenta = Carbon::parse($request->fecha);
             }
 
@@ -146,6 +148,20 @@ class VentaController extends Controller
             foreach ($productos as $p) {
                 if (!isset($p['id'], $p['cantidad'], $p['precio'])) {
                     throw new \InvalidArgumentException('Los datos de un producto de la venta son inválidos.');
+                }
+
+                $costoUnitario = null;
+                if ($esAdmin) {
+                    $costoRecibido = $p['costo_unitario'] ?? null;
+
+                    if (!is_scalar($costoRecibido) || !is_numeric($costoRecibido)) {
+                        throw new \InvalidArgumentException("Debe ingresar un costo unitario válido para el producto.");
+                    }
+
+                    $costoUnitario = (float) $costoRecibido;
+                    if (!is_finite($costoUnitario) || $costoUnitario < 0) {
+                        throw new \InvalidArgumentException("El costo unitario debe ser un número mayor o igual a cero.");
+                    }
                 }
 
                 $cantidad = filter_var($p['cantidad'], FILTER_VALIDATE_INT);
@@ -206,6 +222,7 @@ class VentaController extends Controller
                     'cantidad' => $cantidad,
                     // Asegúrate que el campo exista en tu tabla:
                     'precio_unitario' => $p['precio'],
+                    'costo_unitario' => $costoUnitario,
                     'subtotal' => $subtotal,
                 ]);
             }

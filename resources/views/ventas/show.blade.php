@@ -25,6 +25,13 @@
 
     <div class="card mt-3">
         <div class="card-body table-responsive">
+            @role('admin')
+                @php
+                    $costoTotalVenta = 0;
+                    $gananciaTotal = 0;
+                    $tieneDetallesSinCosto = false;
+                @endphp
+            @endrole
             <table class="table table-striped">
                 <thead class="table-dark">
                     <tr>
@@ -32,11 +39,36 @@
                         <th>Género</th>
                         <th>Cantidad</th>
                         <th>Precio unitario</th>
+                        @role('admin')
+                            <th>Costo unitario</th>
+                            <th>Costo total</th>
+                        @endrole
                         <th>Subtotal</th>
+                        @role('admin')
+                            <th>Ganancia</th>
+                        @endrole
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($venta->detalles as $detalle)
+                        @role('admin')
+                            @php
+                                $tieneCosto = $detalle->costo_unitario !== null;
+                                $costoTotalDetalle = $tieneCosto
+                                    ? $detalle->costo_unitario * $detalle->cantidad
+                                    : null;
+                                $gananciaDetalle = $tieneCosto
+                                    ? $detalle->subtotal - $costoTotalDetalle
+                                    : null;
+
+                                if ($tieneCosto) {
+                                    $costoTotalVenta += $costoTotalDetalle;
+                                    $gananciaTotal += $gananciaDetalle;
+                                } else {
+                                    $tieneDetallesSinCosto = true;
+                                }
+                            @endphp
+                        @endrole
                         <tr>
                             <td>
                                 {{ $detalle->producto->nombre }}
@@ -47,10 +79,44 @@
                             <td>{{ $detalle->producto->genero }}</td>
                             <td>{{ $detalle->cantidad }}</td>
                             <td>${{ number_format($detalle->precio_unitario, 2) }}</td>
+                            @role('admin')
+                                <td>{{ $tieneCosto ? '$' . number_format($detalle->costo_unitario, 2) : '—' }}</td>
+                                <td>{{ $tieneCosto ? '$' . number_format($costoTotalDetalle, 2) : '—' }}</td>
+                            @endrole
                             <td>${{ number_format($detalle->subtotal, 2) }}</td>
+                            @role('admin')
+                                <td>{{ $tieneCosto ? '$' . number_format($gananciaDetalle, 2) : '—' }}</td>
+                            @endrole
                         </tr>
                     @endforeach
                 </tbody>
+                @role('admin')
+                    <tfoot>
+                        <tr>
+                            <th colspan="7" class="text-end">Total venta:</th>
+                            <th>${{ number_format($venta->total, 2) }}</th>
+                        </tr>
+                        <tr>
+                            <th colspan="7" class="text-end">Costo total:</th>
+                            <th>
+                                {{ $tieneDetallesSinCosto ? '—' : '$' . number_format($costoTotalVenta, 2) }}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th colspan="7" class="text-end">Ganancia total:</th>
+                            <th>
+                                {{ $tieneDetallesSinCosto ? '—' : '$' . number_format($gananciaTotal, 2) }}
+                            </th>
+                        </tr>
+                        @if($tieneDetallesSinCosto)
+                            <tr>
+                                <td colspan="8" class="text-muted">
+                                    Esta venta tiene detalles sin costo registrado; no se puede mostrar una ganancia total completa.
+                                </td>
+                            </tr>
+                        @endif
+                    </tfoot>
+                @endrole
             </table>
         </div>
     </div>
