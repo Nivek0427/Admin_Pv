@@ -97,6 +97,13 @@
         <div class="summary">
             Total ventas (dinero): ${{ number_format($totalVentas, 0, ',', '.') }}
             &nbsp; | &nbsp;
+            <br>Efectivo: ${{ number_format($totalesPorMetodo['efectivo'], 0, ',', '.') }}
+            <br>Transferencia: ${{ number_format($totalesPorMetodo['transferencia'], 0, ',', '.') }}
+            <br>ADDI: ${{ number_format($totalesPorMetodo['addi'], 0, ',', '.') }}
+            <br>Sistecrédito: ${{ number_format($totalesPorMetodo['sistecredito'], 0, ',', '.') }}
+            <br>Fiado: ${{ number_format($totalesPorMetodo['fiado'], 0, ',', '.') }}
+            <br>Tarjeta (histórico): ${{ number_format($totalesPorMetodo['tarjeta'], 0, ',', '.') }}
+            <br><strong>Total: ${{ number_format($totalVentas, 0, ',', '.') }}</strong>
         </div>
         @if(!empty($productosVendidos))
             <h4 style="margin-top:10px;">Unidades vendidas por producto (solo ventas activas)</h4>

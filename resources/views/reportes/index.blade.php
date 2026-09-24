@@ -73,6 +73,17 @@
         <strong>Ventas Revocadas:</strong> {{ $ventasRevocadas }}
     </div>
 
+    <div class="alert alert-secondary">
+        <strong>Totales por medio de pago:</strong><br>
+        Efectivo: ${{ number_format($totalesPorMetodo['efectivo'], 0, ',', '.') }}<br>
+        Transferencia: ${{ number_format($totalesPorMetodo['transferencia'], 0, ',', '.') }}<br>
+        ADDI: ${{ number_format($totalesPorMetodo['addi'], 0, ',', '.') }}<br>
+        Sistecrédito: ${{ number_format($totalesPorMetodo['sistecredito'], 0, ',', '.') }}<br>
+        Fiado: ${{ number_format($totalesPorMetodo['fiado'], 0, ',', '.') }}<br>
+        Tarjeta (histórico): ${{ number_format($totalesPorMetodo['tarjeta'], 0, ',', '.') }}<br>
+        <strong>Total: ${{ number_format($totalVentas, 0, ',', '.') }}</strong>
+    </div>
+
     <table class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
@@ -92,7 +103,7 @@
                     <td>{{ $venta->cliente ?? '-' }}</td>
                     <td>{{ $venta->fecha }}</td>
                     <td>${{ number_format($venta->total, 0, ',', '.') }}</td>
-                    <td>{{ ucfirst($venta->metodo_pago) }}</td>
+                    <td>{{ $venta->metodo_pago === 'addi' ? 'ADDI' : ucfirst($venta->metodo_pago) }}</td>
                     <td>
                         @if($venta->estado === 'activa')
                             <span class="badge bg-success">Activa</span>
