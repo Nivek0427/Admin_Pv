@@ -58,7 +58,7 @@
                                     ? $detalle->costo_unitario * $detalle->cantidad
                                     : null;
                                 $gananciaDetalle = $tieneCosto
-                                    ? $detalle->subtotal - $costoTotalDetalle
+                                    ? ($detalle->precio_unitario - $detalle->costo_unitario) * $detalle->cantidad
                                     : null;
 
                                 if ($tieneCosto) {

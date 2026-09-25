@@ -49,10 +49,14 @@ class ProductoController extends Controller
     // Guardar producto nuevo
     public function store(Request $request)
 {
-    $request->validate([
+    $esZapato = $request->input('categoria') === 'Zapatos';
+    $validated = $request->validate([
         'nombre' => 'required|string|max:255',
         'precio' => 'required|numeric|min:0',
-        'categoria' => 'nullable|string|max:255',
+        'costo' => 'required|numeric|min:0',
+        'categoria' => 'required|in:Camisas,Pantalones,Zapatos,Gorras,Accesorios',
+        'genero' => $esZapato ? 'required|in:Hombre,Mujer' : 'nullable',
+        'descripcion' => 'nullable|string',
         'stock' => 'nullable|integer|min:0',
         'tallas' => 'nullable|array',
         'tallas.*' => 'integer|distinct|exists:tallas,id',
@@ -61,16 +65,20 @@ class ProductoController extends Controller
 
     $tallasSeleccionadas = $this->validarTallas($request);
 
-    $producto = DB::transaction(function () use ($request, $tallasSeleccionadas) {
-        $esZapato = $request->input('categoria') === 'Zapatos';
+    $producto = DB::transaction(function () use ($validated, $tallasSeleccionadas, $esZapato) {
         $stock = $esZapato
             ? collect($tallasSeleccionadas)->sum('stock')
-            : $request->input('stock', 0);
+            : ($validated['stock'] ?? 0);
 
-        $producto = Producto::create(array_merge(
-            $request->only(['nombre', 'categoria', 'descripcion', 'precio', 'genero']),
-            ['stock' => $stock]
-        ));
+        $producto = Producto::create([
+            'nombre' => $validated['nombre'],
+            'categoria' => $validated['categoria'],
+            'descripcion' => $validated['descripcion'] ?? null,
+            'precio' => $validated['precio'],
+            'costo' => $validated['costo'],
+            'genero' => $esZapato ? $validated['genero'] : 'Hombre',
+            'stock' => $stock,
+        ]);
 
         if ($esZapato) {
             foreach ($tallasSeleccionadas as $talla) {
@@ -132,16 +140,21 @@ class ProductoController extends Controller
     {
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
-            'categoria' => 'required|string|max:255',
+            'categoria' => 'required|in:Camisas,Pantalones,Zapatos,Gorras,Accesorios',
             'descripcion' => 'nullable|string',
             'precio' => 'required|numeric|min:0',
-            'genero' => 'required|string|max:255',
+            'costo' => 'required|numeric|min:0',
+            'genero' => $request->input('categoria') === 'Zapatos'
+                ? 'required|in:Hombre,Mujer'
+                : 'nullable',
             'tallas' => 'nullable|array',
             'tallas.*' => 'integer|distinct|exists:tallas,id',
             'stock_tallas' => 'nullable|array',
         ]);
 
         $tallasSeleccionadas = $this->validarTallas($request);
+        $esZapato = $validated['categoria'] === 'Zapatos';
+        $validated['genero'] = $esZapato ? $validated['genero'] : 'Hombre';
 
         DB::transaction(function () use ($producto, $validated, $request, $tallasSeleccionadas) {
             $esZapato = $validated['categoria'] === 'Zapatos';
@@ -188,11 +201,22 @@ class ProductoController extends Controller
             return [];
         }
 
-        $tallas = $request->input('tallas', []);
+        $tallas = $request->input('tallas', []) ?? [];
         $stocks = $request->input('stock_tallas', []);
         $resultado = [];
+        $numerosTallas = Talla::whereIn('id', $tallas)->pluck('numero', 'id');
+        $genero = $request->input('genero');
+        [$tallaMinima, $tallaMaxima] = $genero === 'Mujer' ? [36, 40] : [38, 44];
 
         foreach ($tallas as $tallaId) {
+            $numeroTalla = (int) $numerosTallas[$tallaId];
+
+            if ($numeroTalla < $tallaMinima || $numeroTalla > $tallaMaxima) {
+                throw ValidationException::withMessages([
+                    'tallas' => "La talla {$numeroTalla} no está disponible para el género {$genero}.",
+                ]);
+            }
+
             $stock = $stocks[$tallaId] ?? null;
 
             if ($stock === null || !is_scalar($stock) || !preg_match('/^\d+$/', (string) $stock)) {

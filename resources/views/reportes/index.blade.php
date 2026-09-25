@@ -21,6 +21,7 @@
         <select name="tipo" id="tipo" class="form-control">
             <option value="">-- Seleccionar --</option>
             <option value="dia" {{ request('tipo')=='dia'?'selected':'' }}>Hoy</option>
+            <option value="ayer" {{ request('tipo')=='ayer'?'selected':'' }}>Ayer</option>
             <option value="semana" {{ request('tipo')=='semana'?'selected':'' }}>Esta semana</option>
             <option value="mes" {{ request('tipo')=='mes'?'selected':'' }}>Este mes</option>
         </select>
@@ -73,6 +74,15 @@
         <strong>Ventas Revocadas:</strong> {{ $ventasRevocadas }}
     </div>
 
+    @can('reportes')
+        <div class="alert alert-success">
+            <strong>Ganancia calculada:</strong> ${{ number_format($gananciaTotal, 0, ',', '.') }}
+            @if ($hayDetallesSinCostoHistorico)
+                <br><small>* La ganancia corresponde únicamente a detalles con costo histórico registrado.</small>
+            @endif
+        </div>
+    @endcan
+
     <div class="alert alert-secondary">
         <strong>Totales por medio de pago:</strong><br>
         Efectivo: ${{ number_format($totalesPorMetodo['efectivo'], 0, ',', '.') }}<br>
@@ -94,6 +104,9 @@
                 <th>Método de pago</th>
                 <th>Estado</th>
                 <th>Productos</th>
+                @can('reportes')
+                    <th>Ganancia</th>
+                @endcan
             </tr>
         </thead>
         <tbody>
@@ -122,9 +135,13 @@
                             -
                         @endforelse
                     </td>
+                    @can('reportes')
+                        @php($gananciaVenta = $gananciasPorVenta[$venta->id] ?? null)
+                        <td>{{ $gananciaVenta === null ? '—' : '$' . number_format($gananciaVenta, 0, ',', '.') }}</td>
+                    @endcan
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center">No hay ventas en este periodo.</td></tr>
+                <tr><td colspan="8" class="text-center">No hay ventas en este periodo.</td></tr>
             @endforelse
         </tbody>
     </table>

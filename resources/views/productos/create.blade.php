@@ -29,19 +29,20 @@
             <label class="form-label">Categoria</label>
             <select name="categoria" id="categoria" class="form-control" required>
                 <option value="">Seleccione...</option>
-                <option value="Ropa" {{ old('categoria') == 'Ropa' ? 'selected' : '' }}>Ropa</option>
-                <option value="Accesorio" {{ old('categoria') == 'Accesorio' ? 'selected' : '' }}>Accesorio</option>
+                <option value="Camisas" {{ old('categoria') == 'Camisas' ? 'selected' : '' }}>Camisas</option>
+                <option value="Pantalones" {{ old('categoria') == 'Pantalones' ? 'selected' : '' }}>Pantalones</option>
                 <option value="Zapatos" {{ old('categoria') == 'Zapatos' ? 'selected' : '' }}>Zapatos</option>
+                <option value="Gorras" {{ old('categoria') == 'Gorras' ? 'selected' : '' }}>Gorras</option>
+                <option value="Accesorios" {{ old('categoria') == 'Accesorios' ? 'selected' : '' }}>Accesorios</option>
             </select>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3" id="genero-group">
             <label class="form-label">Género</label>
-            <select name="genero" class="form-control" required>
+            <select name="genero" id="genero" class="form-control">
                 <option value="">Seleccione...</option>
-                <option value="Hombre">Hombre</option>
-                <option value="Mujer">Mujer</option>
-                <option value="Unisex">Unisex</option>
+                <option value="Hombre" {{ old('genero') == 'Hombre' ? 'selected' : '' }}>Hombre</option>
+                <option value="Mujer" {{ old('genero') == 'Mujer' ? 'selected' : '' }}>Mujer</option>
             </select>
         </div>
 
@@ -56,6 +57,11 @@
             <input type="number" name="precio" class="form-control" value="{{ old('precio') }}" min="0" step="0.01" required>
         </div>
 
+        <div class="form-group mt-3">
+            <label for="costo">Costo actual</label>
+            <input type="number" name="costo" class="form-control" value="{{ old('costo') }}" min="0" step="0.01" required>
+        </div>
+
         <div class="form-group mt-3" id="stock-general-group">
             <label for="stock">Stock inicial</label>
             <input type="number" name="stock" class="form-control" value="{{ old('stock', 0) }}" min="0" required>
@@ -68,7 +74,7 @@
                     @php
                         $tallaSeleccionada = in_array($talla->id, old('tallas', []));
                     @endphp
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3 talla-option" data-numero="{{ $talla->numero }}">
                         <div class="form-check">
                             <input
                                 type="checkbox"
@@ -108,20 +114,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const categoria = document.getElementById('categoria');
     const tallasContainer = document.getElementById('tallas-container');
     const stockGeneralGroup = document.getElementById('stock-general-group');
+    const generoGroup = document.getElementById('genero-group');
+    const genero = document.getElementById('genero');
+    const tallaOptions = document.querySelectorAll('.talla-option');
 
     function actualizarTallas() {
         const esZapatos = categoria.value === 'Zapatos';
         tallasContainer.style.display = esZapatos ? 'block' : 'none';
         stockGeneralGroup.style.display = esZapatos ? 'none' : 'block';
+        generoGroup.style.display = esZapatos ? 'block' : 'none';
+        genero.disabled = !esZapatos;
+
+        const rango = genero.value === 'Mujer' ? [36, 40] : genero.value === 'Hombre' ? [38, 44] : null;
+
+        tallaOptions.forEach(function (option) {
+            const checkbox = option.querySelector('.talla-checkbox');
+            const stock = option.querySelector('.talla-stock');
+            const numero = Number(option.dataset.numero);
+            const enRango = rango && numero >= rango[0] && numero <= rango[1];
+            const disponible = esZapatos && enRango;
+
+            option.style.display = disponible ? '' : 'none';
+            if (esZapatos && !enRango) {
+                checkbox.checked = false;
+            }
+            checkbox.disabled = !disponible;
+            stock.disabled = !disponible || !checkbox.checked;
+        });
     }
 
     document.querySelectorAll('.talla-checkbox').forEach(function (checkbox) {
         checkbox.addEventListener('change', function () {
-            this.closest('.form-check').nextElementSibling.disabled = !this.checked;
+            actualizarTallas();
         });
     });
 
     categoria.addEventListener('change', actualizarTallas);
+    genero.addEventListener('change', actualizarTallas);
     actualizarTallas();
 });
 </script>

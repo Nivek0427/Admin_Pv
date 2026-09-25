@@ -104,6 +104,12 @@
             <br>Fiado: ${{ number_format($totalesPorMetodo['fiado'], 0, ',', '.') }}
             <br>Tarjeta (histórico): ${{ number_format($totalesPorMetodo['tarjeta'], 0, ',', '.') }}
             <br><strong>Total: ${{ number_format($totalVentas, 0, ',', '.') }}</strong>
+            @can('reportes')
+                <br><strong>Ganancia calculada: ${{ number_format($gananciaTotal, 0, ',', '.') }}</strong>
+                @if ($hayDetallesSinCostoHistorico)
+                    <br><small>* La ganancia corresponde únicamente a detalles con costo histórico registrado.</small>
+                @endif
+            @endcan
         </div>
         @if(!empty($productosVendidos))
             <h4 style="margin-top:10px;">Unidades vendidas por producto (solo ventas activas)</h4>
@@ -114,6 +120,9 @@
                         <th>Producto</th>
                         <th>Género</th>
                         <th style="width:15%" class="text-right">Unidades</th>
+                        @can('reportes')
+                            <th class="text-right">Ganancia</th>
+                        @endcan
                     </tr>
                 </thead>
                 <tbody>
@@ -122,6 +131,12 @@
                             <td>{{ $producto }}</td>
                             <td>{{ $productosGeneros[$producto] ?? '-' }}</td>
                             <td class="text-right">{{ number_format($cantidad, 0, ',', '.') }}</td>
+                            @can('reportes')
+                                @php($gananciaProducto = $gananciasPorProducto[$producto] ?? null)
+                                <td class="text-right">
+                                    {{ $gananciaProducto === null ? '—' : '$' . number_format($gananciaProducto, 0, ',', '.') }}
+                                </td>
+                            @endcan
                         </tr>
                     @endforeach
                 </tbody>
@@ -139,6 +154,9 @@
                     <th>Método de pago</th>
                     <th style="width:12%">Estado</th>
                     <th style="width:26%">Productos (qty × nombre)</th>
+                    @can('reportes')
+                        <th class="text-right">Ganancia</th>
+                    @endcan
                 </tr>
             </thead>
             <tbody>
@@ -161,6 +179,12 @@
                                 @if(!$loop->last), @endif
                             @endforeach
                         </td>
+                        @can('reportes')
+                            @php($gananciaVenta = $gananciasPorVenta[$v->id] ?? null)
+                            <td class="text-right">
+                                {{ $gananciaVenta === null ? '—' : '$' . number_format($gananciaVenta, 0, ',', '.') }}
+                            </td>
+                        @endcan
                     </tr>
                 @endforeach
             </tbody>

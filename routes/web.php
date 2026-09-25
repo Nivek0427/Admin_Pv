@@ -90,7 +90,9 @@ Route::middleware(['auth'])->group(function () {
     // Reportes
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index')->middleware('can:reportes');
     Route::post('/reportes/filtrar', [ReporteController::class, 'filtrar'])->name('reportes.filtrar');
-    Route::get('/reportes/pdf', [ReporteController::class, 'generarPDF'])->name('reportes.pdf');
+    Route::get('/reportes/pdf', [ReporteController::class, 'generarPDF'])
+        ->name('reportes.pdf')
+        ->middleware('can:reportes');
 
 });
 
