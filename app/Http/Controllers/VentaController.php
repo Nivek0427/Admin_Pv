@@ -77,7 +77,30 @@ class VentaController extends Controller
 
     public function show($id)
     {
-        $venta = Venta::with(['detalles.producto', 'detalles.talla'])->findOrFail($id);
+        if (auth()->user()->hasRole('admin')) {
+            $venta = Venta::with(['detalles.producto', 'detalles.talla'])->findOrFail($id);
+        } else {
+            $venta = Venta::with([
+                'detalles' => function ($query) {
+                    $query->select([
+                        'id',
+                        'venta_id',
+                        'producto_id',
+                        'talla_id',
+                        'cantidad',
+                        'precio_unitario',
+                        'subtotal',
+                    ]);
+                },
+                'detalles.producto' => function ($query) {
+                    $query->select(['id', 'nombre', 'genero']);
+                },
+                'detalles.talla' => function ($query) {
+                    $query->select(['id', 'numero']);
+                },
+            ])->findOrFail($id);
+        }
+
         return view('ventas.show', compact('venta'));
     }
 
@@ -150,20 +173,6 @@ class VentaController extends Controller
                     throw new \InvalidArgumentException('Los datos de un producto de la venta son inválidos.');
                 }
 
-                $costoUnitario = null;
-                if ($esAdmin) {
-                    $costoRecibido = $p['costo_unitario'] ?? null;
-
-                    if (!is_scalar($costoRecibido) || !is_numeric($costoRecibido)) {
-                        throw new \InvalidArgumentException("Debe ingresar un costo unitario válido para el producto.");
-                    }
-
-                    $costoUnitario = (float) $costoRecibido;
-                    if (!is_finite($costoUnitario) || $costoUnitario < 0) {
-                        throw new \InvalidArgumentException("El costo unitario debe ser un número mayor o igual a cero.");
-                    }
-                }
-
                 $cantidad = filter_var($p['cantidad'], FILTER_VALIDATE_INT);
                 if ($cantidad === false || $cantidad < 1) {
                     throw new \InvalidArgumentException('La cantidad de cada producto debe ser un entero positivo.');
@@ -175,6 +184,7 @@ class VentaController extends Controller
                     throw new \InvalidArgumentException("El producto con ID {$p['id']} no existe.");
                 }
 
+                $costoUnitario = $producto->costo;
                 $tallaId = null;
                 $productoTalla = null;
 

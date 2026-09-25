@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Venta;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Collection;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -11,58 +12,13 @@ class ReporteController extends Controller
 {
     public function index(Request $request)
     {
-        $tipo = $request->input('tipo'); // dia, semana, mes
-        $estado = $request->input('estado');
-        $ventas = Venta::query()->with(['detalles.producto', 'detalles.talla']);
-
-        $hayFiltros = false;
-
-
-        // Filtro por rango personalizado
-        if ($request->filled('desde') && $request->filled('hasta')) {
-            $ventas->whereBetween('fecha', [$request->desde, $request->hasta]);
-            $hayFiltros = true;
-        }
-
-        // Filtros rápidos
-        elseif ($tipo === 'dia') {
-            $ventas->whereDate('fecha', Carbon::today());
-            $hayFiltros = true;
-        } elseif ($tipo === 'semana') {
-            $ventas->whereBetween('fecha', [
-                Carbon::now()->startOfWeek(),
-                Carbon::now()->endOfWeek()
-            ]);
-            $hayFiltros = true;
-        } elseif ($tipo === 'mes') {
-            $ventas->whereMonth('fecha', Carbon::now()->month);
-            $hayFiltros = true;
-        }
-
-        // Filtro por estado
-        if ($estado === 'activa' || $estado === 'revocada') {
-            $ventas->where('estado', $estado);
-            $hayFiltros = true;
-        }
-        //filtro por metodo de pago
-        if ($request->filled('metodo_pago')) {
-            $ventas->where('metodo_pago', $request->metodo_pago);
-            $hayFiltros = true;
-        }
-
-
-
-        if (!$hayFiltros) {
-            // Si no hay filtros, mostrar solo ventas del día por defecto
-            $ventas->whereDate('fecha', Carbon::today());
-            $tipo = 'dia';
-        }
-
-        $ventas = $ventas->get();
+        [$query, $tipo] = $this->consultaVentasFiltradas($request);
+        $ventas = $query->get();
 
         $ventasActivas = $ventas->where('estado', 'activa');
         $totalVentas = $ventasActivas->sum('total');
         $ventasRevocadas = $ventas->where('estado', 'revocada')->count();
+        $ganancias = $this->calcularGanancias($ventasActivas);
         $totalesPorMetodo = [
             'efectivo' => $ventasActivas->where('metodo_pago', 'efectivo')->sum('total'),
             'transferencia' => $ventasActivas->where('metodo_pago', 'transferencia')->sum('total'),
@@ -78,55 +34,17 @@ class ReporteController extends Controller
             'totalesPorMetodo' => $totalesPorMetodo,
             'ventasActivas' => $ventasActivas->count(),
             'ventasRevocadas' => $ventasRevocadas,
+            'gananciaTotal' => $ganancias['total'],
+            'gananciasPorVenta' => $ganancias['porVenta'],
+            'hayDetallesSinCostoHistorico' => $ganancias['parcial'],
             'tipo' => $tipo
         ]);
     }
 
     public function generarPDF(Request $request)
     {
-        $tipo = $request->input('tipo');
+        [$query, $tipo] = $this->consultaVentasFiltradas($request);
         $estado = $request->input('estado');
-
-        $query = Venta::query()->with(['detalles.producto', 'detalles.talla']);
-        $hayFiltros = false;
-
-
-        // Filtro por rango (fecha)
-        if ($request->filled('desde') && $request->filled('hasta')) {
-            $query->whereBetween('fecha', [$request->desde, $request->hasta]);
-            $hayFiltros = true;
-        }
-        // Filtros rápidos
-        elseif ($tipo === 'dia') {
-            $query->whereDate('fecha', Carbon::today());
-            $hayFiltros = true;
-        } elseif ($tipo === 'semana') {
-            $query->whereBetween('fecha', [
-                Carbon::now()->startOfWeek(),
-                Carbon::now()->endOfWeek()
-            ]);
-            $hayFiltros = true;
-        } elseif ($tipo === 'mes') {
-            $query->whereMonth('fecha', Carbon::now()->month);
-            $hayFiltros = true;
-        }
-
-        // Filtro por estado
-        if ($estado === 'activa' || $estado === 'revocada') {
-            $query->where('estado', $estado);
-            $hayFiltros = true;
-        }
-
-        // Filtro por método de pago
-        if ($request->filled('metodo_pago')) {
-            $query->where('metodo_pago', $request->metodo_pago);
-            $hayFiltros = true;
-        }
-        // Si no hay filtros, mostrar solo ventas del día por defecto
-        if (!$hayFiltros) {
-            $query->whereDate('fecha', Carbon::today());
-            $tipo = 'dia';
-        }
 
         $ventas = $query->orderBy('fecha', 'desc')->get();
 
@@ -137,6 +55,7 @@ class ReporteController extends Controller
         // Total dinero (solo activas)
         $ventasActivas = $ventas->where('estado', 'activa');
         $totalVentas = $ventasActivas->sum('total');
+        $ganancias = $this->calcularGanancias($ventasActivas);
         $totalesPorMetodo = [
             'efectivo' => $ventasActivas->where('metodo_pago', 'efectivo')->sum('total'),
             'transferencia' => $ventasActivas->where('metodo_pago', 'transferencia')->sum('total'),
@@ -201,6 +120,10 @@ class ReporteController extends Controller
             'totalProductosVendidos' => $totalProductosVendidos,
             'productosVendidos' => $productosVendidos,  // << SE AGREGA
             'productosGeneros' => $productosGeneros,
+            'gananciaTotal' => $ganancias['total'],
+            'gananciasPorVenta' => $ganancias['porVenta'],
+            'gananciasPorProducto' => $ganancias['porProducto'],
+            'hayDetallesSinCostoHistorico' => $ganancias['parcial'],
             'filtros' => $filtros,
             'logo' => $logoPath,
         ]);
@@ -208,6 +131,96 @@ class ReporteController extends Controller
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download('reporte_ventas_'.now()->format('Ymd_His').'.pdf');
+    }
+
+    private function consultaVentasFiltradas(Request $request): array
+    {
+        $tipo = $request->input('tipo');
+        $estado = $request->input('estado');
+        $query = Venta::query()->with(['detalles.producto', 'detalles.talla']);
+        $hayFiltros = false;
+
+        if ($request->filled('desde') && $request->filled('hasta')) {
+            $query->whereDate('fecha', '>=', $request->desde)
+                ->whereDate('fecha', '<=', $request->hasta);
+            $hayFiltros = true;
+        } elseif ($tipo === 'dia') {
+            $query->whereDate('fecha', Carbon::today());
+            $hayFiltros = true;
+        } elseif ($tipo === 'ayer') {
+            $query->whereDate('fecha', Carbon::yesterday());
+            $hayFiltros = true;
+        } elseif ($tipo === 'semana') {
+            $query->whereBetween('fecha', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+            $hayFiltros = true;
+        } elseif ($tipo === 'mes') {
+            $query->whereMonth('fecha', Carbon::now()->month);
+            $hayFiltros = true;
+        }
+
+        if ($estado === 'activa' || $estado === 'revocada') {
+            $query->where('estado', $estado);
+            $hayFiltros = true;
+        }
+
+        if ($request->filled('metodo_pago')) {
+            $query->where('metodo_pago', $request->metodo_pago);
+            $hayFiltros = true;
+        }
+
+        if (!$hayFiltros) {
+            $query->whereDate('fecha', Carbon::today());
+            $tipo = 'dia';
+        }
+
+        return [$query, $tipo];
+    }
+
+    private function calcularGanancias(Collection $ventasActivas): array
+    {
+        $total = 0;
+        $porVenta = [];
+        $porProducto = [];
+        $parcial = false;
+
+        foreach ($ventasActivas as $venta) {
+            $gananciaVenta = 0;
+            $tieneDetalles = false;
+            $tieneCostoHistoricoCompleto = true;
+
+            foreach ($venta->detalles as $detalle) {
+                $tieneDetalles = true;
+                $nombre = $detalle->producto?->nombre ?? '[producto eliminado]';
+
+                if (!array_key_exists($nombre, $porProducto)) {
+                    $porProducto[$nombre] = null;
+                }
+
+                if ($detalle->costo_unitario === null) {
+                    $parcial = true;
+                    $tieneCostoHistoricoCompleto = false;
+                    continue;
+                }
+
+                $ganancia = ((float) $detalle->precio_unitario - (float) $detalle->costo_unitario)
+                    * (int) $detalle->cantidad;
+
+                $total += $ganancia;
+                $gananciaVenta += $ganancia;
+                $porProducto[$nombre] = ($porProducto[$nombre] ?? 0) + $ganancia;
+            }
+
+            $porVenta[$venta->id] = $tieneDetalles && $tieneCostoHistoricoCompleto
+                ? $gananciaVenta
+                : null;
+        }
+
+        return [
+            'total' => $total,
+            'porVenta' => $porVenta,
+            'porProducto' => $porProducto,
+            'parcial' => $parcial,
+        ];
     }
 
 

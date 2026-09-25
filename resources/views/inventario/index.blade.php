@@ -27,9 +27,11 @@
       <label for="categoria" class="form-label">Categoría</label>
       <select name="categoria" id="categoria" class="form-control">
         <option value="">Todas</option>
-        <option value="Ropa" {{ request('categoria') === 'Ropa' ? 'selected' : '' }}>Ropa</option>
-        <option value="Accesorio" {{ request('categoria') === 'Accesorio' ? 'selected' : '' }}>Accesorio</option>
+        <option value="Camisas" {{ request('categoria') === 'Camisas' ? 'selected' : '' }}>Camisas</option>
+        <option value="Pantalones" {{ request('categoria') === 'Pantalones' ? 'selected' : '' }}>Pantalones</option>
         <option value="Zapatos" {{ request('categoria') === 'Zapatos' ? 'selected' : '' }}>Zapatos</option>
+        <option value="Gorras" {{ request('categoria') === 'Gorras' ? 'selected' : '' }}>Gorras</option>
+        <option value="Accesorios" {{ request('categoria') === 'Accesorios' ? 'selected' : '' }}>Accesorios</option>
       </select>
     </div>
     <div class="col-md-3 d-flex align-items-end">
