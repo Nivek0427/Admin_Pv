@@ -6,6 +6,7 @@ use App\Models\Venta;
 use App\Models\Producto;
 use App\Models\DetalleVenta;
 use App\Models\Banco;
+use App\Models\ProductoTalla;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -76,7 +77,7 @@ class VentaController extends Controller
 
     public function show($id)
     {
-        $venta = Venta::with(['detalles.producto'])->findOrFail($id);
+        $venta = Venta::with(['detalles.producto', 'detalles.talla'])->findOrFail($id);
         return view('ventas.show', compact('venta'));
     }
 
@@ -86,7 +87,7 @@ class VentaController extends Controller
      */
     public function create()
     {
-        $productos = Producto::all();
+        $productos = Producto::with('productoTallas.talla')->get();
         $bancos = Banco::all();
         return view('ventas.create', compact('productos', 'bancos'));
     }
@@ -96,14 +97,16 @@ class VentaController extends Controller
      */
     public function store(Request $request)
     {
+        $esAdmin = auth()->user()->hasRole('admin');
+
         // Validar datos básicos de la venta
         $request->validate([
-            'metodo_pago' => 'required',
+            'metodo_pago' => 'required|in:efectivo,addi,transferencia,sistecredito,Fiado,fiado',
             'banco_id' => 'required_if:metodo_pago,transferencia'
         ]);
 
         // Solo los admin pueden establecer la fecha de la venta
-        if (auth()->user()->hasRole('admin')) {
+        if ($esAdmin) {
         $request->validate([
             'fecha' => 'nullable|date|before_or_equal:today',
         ]);
@@ -124,7 +127,7 @@ class VentaController extends Controller
 
             $fechaVenta = now();
 
-            if(auth()->user()->hasRole('admin') && $request->filled('fecha')) {
+            if($esAdmin && $request->filled('fecha')) {
                 $fechaVenta = Carbon::parse($request->fecha);
             }
 
@@ -143,34 +146,83 @@ class VentaController extends Controller
 
             // Procesar cada producto de la venta
             foreach ($productos as $p) {
-                $producto = Producto::find($p['id']);
-
-                if (!$producto) {
-                    DB::rollBack();
-                    return back()->with('error', "El producto con ID {$p['id']} no existe.");
+                if (!isset($p['id'], $p['cantidad'], $p['precio'])) {
+                    throw new \InvalidArgumentException('Los datos de un producto de la venta son inválidos.');
                 }
 
-                // Validar stock suficiente
-                if ($producto->stock < $p['cantidad']) {
-                    DB::rollBack();
-                    return back()->with('error', "El producto '{$producto->nombre}' no tiene suficiente stock.");
+                $costoUnitario = null;
+                if ($esAdmin) {
+                    $costoRecibido = $p['costo_unitario'] ?? null;
+
+                    if (!is_scalar($costoRecibido) || !is_numeric($costoRecibido)) {
+                        throw new \InvalidArgumentException("Debe ingresar un costo unitario válido para el producto.");
+                    }
+
+                    $costoUnitario = (float) $costoRecibido;
+                    if (!is_finite($costoUnitario) || $costoUnitario < 0) {
+                        throw new \InvalidArgumentException("El costo unitario debe ser un número mayor o igual a cero.");
+                    }
+                }
+
+                $cantidad = filter_var($p['cantidad'], FILTER_VALIDATE_INT);
+                if ($cantidad === false || $cantidad < 1) {
+                    throw new \InvalidArgumentException('La cantidad de cada producto debe ser un entero positivo.');
+                }
+
+                $producto = Producto::whereKey($p['id'])->lockForUpdate()->first();
+
+                if (!$producto) {
+                    throw new \InvalidArgumentException("El producto con ID {$p['id']} no existe.");
+                }
+
+                $tallaId = null;
+                $productoTalla = null;
+
+                if ($producto->esZapato()) {
+                    if (!isset($p['talla_id']) || !filter_var($p['talla_id'], FILTER_VALIDATE_INT)) {
+                        throw new \InvalidArgumentException("Debe seleccionar una talla para '{$producto->nombre}'.");
+                    }
+
+                    $tallaId = (int) $p['talla_id'];
+                    $productoTalla = ProductoTalla::where('producto_id', $producto->id)
+                        ->where('talla_id', $tallaId)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$productoTalla) {
+                        throw new \InvalidArgumentException("La talla seleccionada no está configurada para '{$producto->nombre}'.");
+                    }
+
+                    if ($productoTalla->stock < $cantidad) {
+                        throw new \InvalidArgumentException("El producto '{$producto->nombre}' no tiene suficiente stock en la talla seleccionada.");
+                    }
+                } elseif ($producto->stock < $cantidad) {
+                    throw new \InvalidArgumentException("El producto '{$producto->nombre}' no tiene suficiente stock.");
                 }
 
                 // Calcular subtotal y actualizar stock
-                $subtotal = $p['precio'] * $p['cantidad'];
+                $subtotal = $p['precio'] * $cantidad;
                 $total += $subtotal;
 
-                $producto->decrement('stock', $p['cantidad']);
-                $producto->registrarMovimiento(-$p['cantidad'], 'venta');
+                if ($producto->esZapato()) {
+                    $productoTalla->decrement('stock', $cantidad);
+                    $producto->sincronizarStockTotal();
+                    $producto->registrarMovimientoConTalla($tallaId, -$cantidad, 'venta');
+                } else {
+                    $producto->decrement('stock', $cantidad);
+                    $producto->registrarMovimiento(-$cantidad, 'venta');
+                }
 
 
                 // Crear el detalle de la venta
                 DetalleVenta::create([
                     'venta_id' => $venta->id,
                     'producto_id' => $producto->id,
-                    'cantidad' => $p['cantidad'],
+                    'talla_id' => $tallaId,
+                    'cantidad' => $cantidad,
                     // Asegúrate que el campo exista en tu tabla:
                     'precio_unitario' => $p['precio'],
+                    'costo_unitario' => $costoUnitario,
                     'subtotal' => $subtotal,
                 ]);
             }
@@ -196,7 +248,7 @@ class VentaController extends Controller
      */
     public function revocar(Request $request, $id)
 {
-    $venta = Venta::with('detalles.producto')->findOrFail($id);
+    $venta = Venta::findOrFail($id);
 
     if ($venta->estado === 'revocada') {
         return back()->with('error', 'Esta venta ya fue revocada.');
@@ -205,12 +257,36 @@ class VentaController extends Controller
     try {
         DB::beginTransaction();
 
+        // Bloquear la venta evita dos revocaciones concurrentes.
+        $venta = Venta::with(['detalles.producto', 'detalles.talla'])
+            ->lockForUpdate()
+            ->findOrFail($id);
+
+        if ($venta->estado === 'revocada') {
+            DB::rollBack();
+            return back()->with('error', 'Esta venta ya fue revocada.');
+        }
+
         // Restaurar stock
         foreach ($venta->detalles as $detalle) {
-            $detalle->producto->increment('stock', $detalle->cantidad);
-        }
-        foreach ($venta->detalles as $detalle) {
-            $detalle->producto->registrarMovimiento($detalle->cantidad, 'revocacion');
+            if ($detalle->talla_id !== null) {
+                $productoTalla = ProductoTalla::where('producto_id', $detalle->producto_id)
+                    ->where('talla_id', $detalle->talla_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $productoTalla->increment('stock', $detalle->cantidad);
+                $detalle->producto->sincronizarStockTotal();
+                $detalle->producto->registrarMovimientoConTalla(
+                    $detalle->talla_id,
+                    $detalle->cantidad,
+                    'revocacion'
+                );
+            } else {
+                // Conserva el comportamiento de ventas históricas y no zapatos.
+                $detalle->producto->increment('stock', $detalle->cantidad);
+                $detalle->producto->registrarMovimiento($detalle->cantidad, 'revocacion');
+            }
         }
 
         // Guardar fecha y motivo

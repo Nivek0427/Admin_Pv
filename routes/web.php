@@ -5,6 +5,7 @@ use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\ConfiguracionController;
 use App\Models\Venta;
 use App\Models\Producto;
 use Illuminate\Support\Facades\Auth;
@@ -45,9 +46,9 @@ Route::middleware(['auth'])->group(function () {
         ->where('metodo_pago', 'fiado')
         ->sum('total');
 
-    $totalTarjeta = Venta::whereDate('fecha', today())
+    $totalAddi = Venta::whereDate('fecha', today())
         ->where('estado', 'activa')
-        ->where('metodo_pago', 'tarjeta')
+        ->where('metodo_pago', 'addi')
         ->sum('total');
 
     $totalSisteCredito = Venta::whereDate('fecha', today())
@@ -63,7 +64,7 @@ Route::middleware(['auth'])->group(function () {
         'ventasHoy',
         'totalEfectivo',
         'totalTransferencia',
-        'totalTarjeta',
+        'totalAddi',
         'totalSisteCredito',
         'ultimasVentas'
     ));
@@ -78,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
     // Inventario
     Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index')->middleware('can:inventario');
     Route::post('/inventario/{id}/actualizar', [InventarioController::class, 'updateCantidad'])->name('inventario.updateCantidad');
+    Route::post('/inventario/{id}/actualizar-tallas', [InventarioController::class, 'actualizarTallas'])->name('inventario.actualizarTallas');
     Route::get('/inventario/movimientos', [InventarioMovimientoController::class, 'index'])
     ->name('inventario.movimientos');
 
@@ -91,6 +93,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reportes/pdf', [ReporteController::class, 'generarPDF'])->name('reportes.pdf');
 
 });
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('configuracion')
+    ->name('configuracion.')
+    ->group(function () {
+        Route::get('/', [ConfiguracionController::class, 'index'])->name('index');
+        Route::post('/verificar', [ConfiguracionController::class, 'verificar'])->name('verificar');
+        Route::post('/password', [ConfiguracionController::class, 'actualizarPassword'])->name('password');
+        Route::post('/usuarios/{user}/password', [ConfiguracionController::class, 'actualizarPasswordUsuario'])
+            ->name('usuarios.password');
+    });
 
 // Ruta por defecto que Laravel UI usa como "home"
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

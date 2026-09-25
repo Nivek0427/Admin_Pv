@@ -30,12 +30,12 @@
         </div>
     </div>
 
-    <!-- Ventas por tarjeta -->
+    <!-- Ventas por ADDI -->
     <div class="col-lg-2 col-md-4 col-sm-6">
         <div class="card-frstore p-3 text-center h-100">
-            <h6>Tarjeta</h6>
+            <h6>ADDI</h6>
             <h4 class="mt-2">
-                ${{ number_format($totalTarjeta, 0, ',', '.') }}
+                ${{ number_format($totalAddi, 0, ',', '.') }}
             </h4>
         </div>
     </div>
@@ -86,7 +86,7 @@
                             <td>{{ $venta->fecha }}</td>
                             <td>${{ number_format($venta->total, 0, ',', '.') }}</td>
                             <td>{{ ucfirst($venta->estado) }}</td>
-                            <td>{{ ucfirst($venta->metodo_pago) }}</td>
+                            <td>{{ $venta->metodo_pago === 'addi' ? 'ADDI' : ucfirst($venta->metodo_pago) }}</td>
                         </tr>
                     @endforeach
                 </tbody>

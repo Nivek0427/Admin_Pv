@@ -21,6 +21,27 @@
     </div>
     @endcan
 
+    <form method="GET" action="{{ route('productos.index') }}" class="row g-2 mb-3">
+        <div class="col-md-5">
+            <label for="buscar" class="form-label">Buscar por nombre o ID</label>
+            <input type="search" name="buscar" id="buscar" class="form-control"
+                value="{{ request('buscar') }}" placeholder="Ej. Nike o 12">
+        </div>
+        <div class="col-md-4">
+            <label for="categoria" class="form-label">Categoría</label>
+            <select name="categoria" id="categoria" class="form-control">
+                <option value="">Todas</option>
+                <option value="Ropa" {{ request('categoria') === 'Ropa' ? 'selected' : '' }}>Ropa</option>
+                <option value="Accesorio" {{ request('categoria') === 'Accesorio' ? 'selected' : '' }}>Accesorio</option>
+                <option value="Zapatos" {{ request('categoria') === 'Zapatos' ? 'selected' : '' }}>Zapatos</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary mr-2">Buscar</button>
+            <a href="{{ route('productos.index') }}" class="btn btn-secondary">Limpiar</a>
+        </div>
+    </form>
+
 
     <div class="card">
         <div class="card-body table-responsive">
@@ -73,6 +94,7 @@
                     @endforelse
                 </tbody>
             </table>
+            {{ $productos->withQueryString()->links() }}
         </div>
     </div>
 </div>

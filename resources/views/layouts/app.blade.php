@@ -120,6 +120,18 @@
         </ul>
     </nav>
     @endcan
+    @role('admin')
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" role="menu">
+                <li class="nav-item">
+                    <a href="{{ route('configuracion.index') }}" class="nav-link">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <p>Configuración</p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    @endrole
     </div>
 
 

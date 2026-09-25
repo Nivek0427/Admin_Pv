@@ -6,6 +6,15 @@
 
     <!-- Filtros -->
     <form method="GET" class="row g-2 mb-4">
+        <div class="col-md-4">
+            <input
+                type="search"
+                name="producto"
+                class="form-control"
+                placeholder="Buscar producto por nombre o ID..."
+                value="{{ request('producto') }}"
+            >
+        </div>
         <div class="col-auto">
             <input type="date" name="fecha_desde" class="form-control" value="{{ request('fecha_desde') }}">
         </div>
@@ -45,6 +54,7 @@
             <thead class="table-dark">
                 <tr>
                     <th>Producto</th>
+                    <th>Talla</th>
                     <th>Género</th>
                     <th>Cantidad</th>
                     <th>Tipo</th>
@@ -56,6 +66,7 @@
                 @foreach($movimientos as $mov)
                     <tr>
                         <td>{{ $mov->producto->nombre }}</td>
+                        <td>{{ $mov->talla?->numero ?? '-' }}</td>
                         <td>{{ $mov->producto->genero }}</td>
                         <td>{{ $mov->cantidad }}</td>
                         <td>{{ $mov->tipo }}</td>

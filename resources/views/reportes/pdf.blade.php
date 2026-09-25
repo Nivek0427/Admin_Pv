@@ -97,6 +97,13 @@
         <div class="summary">
             Total ventas (dinero): ${{ number_format($totalVentas, 0, ',', '.') }}
             &nbsp; | &nbsp;
+            <br>Efectivo: ${{ number_format($totalesPorMetodo['efectivo'], 0, ',', '.') }}
+            <br>Transferencia: ${{ number_format($totalesPorMetodo['transferencia'], 0, ',', '.') }}
+            <br>ADDI: ${{ number_format($totalesPorMetodo['addi'], 0, ',', '.') }}
+            <br>Sistecrédito: ${{ number_format($totalesPorMetodo['sistecredito'], 0, ',', '.') }}
+            <br>Fiado: ${{ number_format($totalesPorMetodo['fiado'], 0, ',', '.') }}
+            <br>Tarjeta (histórico): ${{ number_format($totalesPorMetodo['tarjeta'], 0, ',', '.') }}
+            <br><strong>Total: ${{ number_format($totalVentas, 0, ',', '.') }}</strong>
         </div>
         @if(!empty($productosVendidos))
             <h4 style="margin-top:10px;">Unidades vendidas por producto (solo ventas activas)</h4>
@@ -143,11 +150,14 @@
                             {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y H:i') }}
                         </td>
                         <td class="text-right">${{ number_format($v->total, 0, ',', '.') }}</td>
-                        <td>{{ ucfirst($v->metodo_pago) }}</td>
+                        <td>{{ $v->metodo_pago === 'addi' ? 'ADDI' : ucfirst($v->metodo_pago) }}</td>
                         <td>{{ ucfirst($v->estado) }}</td>
                         <td>
                             @foreach($v->detalles as $d)
                                 {{ $d->cantidad }} × {{ $d->producto?->nombre ?? '[producto eliminado]' }}
+                                @if($d->talla_id)
+                                    - Talla {{ $d->talla?->numero ?? '-' }}
+                                @endif
                                 @if(!$loop->last), @endif
                             @endforeach
                         </td>

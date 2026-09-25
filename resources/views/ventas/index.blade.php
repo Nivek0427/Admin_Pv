@@ -37,7 +37,8 @@
                     <option value="">Todos los métodos</option>
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
-                    <option value="tarjeta">Tarjeta</option>
+                    <option value="addi">ADDI</option>
+                    <option value="tarjeta">Tarjeta (histórico)</option>
                     <option value="sistecredito">Sistecrédito</option>
                 </select>
             </div>
@@ -102,7 +103,7 @@
                     <td>{{ $venta->cliente ?? '-' }}</td>
                     <td>{{ $venta->fecha }}</td>
                     <td>${{ number_format($venta->total, 0, ',', '.') }}</td>
-                    <td>{{ ucfirst($venta->metodo_pago) }}</td>
+                    <td>{{ $venta->metodo_pago === 'addi' ? 'ADDI' : ucfirst($venta->metodo_pago) }}</td>
                     <td>
                         @if($venta->estado === 'activa')
                             <span class="badge bg-success">Activa</span>

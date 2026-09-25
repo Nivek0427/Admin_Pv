@@ -41,7 +41,8 @@
             <option value="">Todos</option>
             <option value="efectivo">Efectivo</option>
             <option value="transferencia">Transferencia</option>
-            <option value="tarjeta">Tarjeta</option>
+            <option value="addi">ADDI</option>
+            <option value="tarjeta">Tarjeta (histórico)</option>
             <option value="sistecredito">Sistecrédito</option>
         </select>
     </div>
@@ -72,6 +73,17 @@
         <strong>Ventas Revocadas:</strong> {{ $ventasRevocadas }}
     </div>
 
+    <div class="alert alert-secondary">
+        <strong>Totales por medio de pago:</strong><br>
+        Efectivo: ${{ number_format($totalesPorMetodo['efectivo'], 0, ',', '.') }}<br>
+        Transferencia: ${{ number_format($totalesPorMetodo['transferencia'], 0, ',', '.') }}<br>
+        ADDI: ${{ number_format($totalesPorMetodo['addi'], 0, ',', '.') }}<br>
+        Sistecrédito: ${{ number_format($totalesPorMetodo['sistecredito'], 0, ',', '.') }}<br>
+        Fiado: ${{ number_format($totalesPorMetodo['fiado'], 0, ',', '.') }}<br>
+        Tarjeta (histórico): ${{ number_format($totalesPorMetodo['tarjeta'], 0, ',', '.') }}<br>
+        <strong>Total: ${{ number_format($totalVentas, 0, ',', '.') }}</strong>
+    </div>
+
     <table class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
@@ -81,6 +93,7 @@
                 <th>Total</th>
                 <th>Método de pago</th>
                 <th>Estado</th>
+                <th>Productos</th>
             </tr>
         </thead>
         <tbody>
@@ -90,7 +103,7 @@
                     <td>{{ $venta->cliente ?? '-' }}</td>
                     <td>{{ $venta->fecha }}</td>
                     <td>${{ number_format($venta->total, 0, ',', '.') }}</td>
-                    <td>{{ ucfirst($venta->metodo_pago) }}</td>
+                    <td>{{ $venta->metodo_pago === 'addi' ? 'ADDI' : ucfirst($venta->metodo_pago) }}</td>
                     <td>
                         @if($venta->estado === 'activa')
                             <span class="badge bg-success">Activa</span>
@@ -98,9 +111,20 @@
                             <span class="badge bg-danger">Revocada</span>
                         @endif
                     </td>
+                    <td>
+                        @forelse($venta->detalles as $detalle)
+                            {{ $detalle->producto?->nombre ?? '[producto eliminado]' }}
+                            @if($detalle->talla_id)
+                                - Talla {{ $detalle->talla?->numero ?? '-' }}
+                            @endif
+                            ({{ $detalle->cantidad }})@if(!$loop->last), @endif
+                        @empty
+                            -
+                        @endforelse
+                    </td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="text-center">No hay ventas en este periodo.</td></tr>
+                <tr><td colspan="7" class="text-center">No hay ventas en este periodo.</td></tr>
             @endforelse
         </tbody>
     </table>

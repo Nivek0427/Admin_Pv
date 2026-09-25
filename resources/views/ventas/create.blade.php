@@ -47,11 +47,22 @@
                 <select id="producto" name="producto_id" class="form-control">
                     <option value="">Seleccione un producto</option>
                     @foreach ($productos as $producto)
+                        @php
+                            $tallasParaVenta = $producto->productoTallas->map(function ($productoTalla) {
+                                return [
+                                    'id' => $productoTalla->talla_id,
+                                    'numero' => $productoTalla->talla->numero,
+                                    'stock' => $productoTalla->stock,
+                                ];
+                            })->values();
+                        @endphp
                         <option
                             value="{{ $producto->id }}"
                             data-nombre="{{ $producto->nombre }}"
                             data-precio="{{ $producto->precio }}"
-                            data-stock="{{ $producto->stock }}">
+                            data-stock="{{ $producto->stock }}"
+                            data-es-zapato="{{ $producto->esZapato() ? '1' : '0' }}"
+                            data-tallas='@json($tallasParaVenta)'>
                             {{ $producto->nombre }}
                         </option>
                     @endforeach
@@ -69,10 +80,24 @@
 
             </div>
 
+            <div class="col-md-3" id="talla-container" style="display:none">
+                <label for="talla_id" class="form-label">Talla</label>
+                <select id="talla_id" class="form-control">
+                    <option value="">Seleccione una talla</option>
+                </select>
+            </div>
+
             <div class="col-md-2">
                 <label for="precio" class="form-label">Precio</label>
                 <input type="number" id="precio" class="form-control">
             </div>
+
+            @role('admin')
+            <div class="col-md-2">
+                <label for="costo_unitario" class="form-label">Costo unitario</label>
+                <input type="number" id="costo_unitario" class="form-control" min="0" step="0.01">
+            </div>
+            @endrole
 
 
 
@@ -81,8 +106,8 @@
                 <select name="metodo_pago" id="metodo_pago" class="form-control" required>
                     <option value="">Seleccione...</option>
                     <option value="efectivo">Efectivo</option>
+                    <option value="addi">ADDI</option>
                     <option value="transferencia">Transferencia</option>
-                    <option value="tarjeta">Tarjeta</option>
                     <option value="sistecredito">Sistecrédito</option>
                     <option value="Fiado">Fiado</option>
                 </select>
@@ -114,18 +139,37 @@
                 <tr>
                     <th>Producto</th>
                     <th>Precio Unitario</th>
+                    @role('admin')
+                        <th>Costo Unitario</th>
+                    @endrole
                     <th>Cantidad</th>
                     <th>Subtotal</th>
+                    @role('admin')
+                        <th>Ganancia</th>
+                    @endrole
                     <th>Acción</th>
                 </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                    <td id="totalVenta">0.00</td>
-                    <td></td>
+                    @role('admin')
+                        <td colspan="5" class="text-end"><strong>Total:</strong></td>
+                        <td id="totalVenta">0.00</td>
+                        <td></td>
+                    @else
+                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                        <td id="totalVenta">0.00</td>
+                        <td></td>
+                    @endrole
                 </tr>
+                @role('admin')
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Ganancia total:</strong></td>
+                        <td id="gananciaTotal">0.00</td>
+                        <td></td>
+                    </tr>
+                @endrole
             </tfoot>
         </table>
 
@@ -146,90 +190,164 @@ document.addEventListener('DOMContentLoaded', function() {
     const productoSelect = document.getElementById('producto');
     const cantidadInput = document.getElementById('cantidad');
     const precioInput = document.getElementById('precio');
+    const costoInput = document.getElementById('costo_unitario');
+    const esAdmin = @role('admin') true @else false @endrole;
+    const tallaContainer = document.getElementById('talla-container');
+    const tallaSelect = document.getElementById('talla_id');
     const agregarBtn = document.getElementById('agregar');
     const detalleVenta = document.querySelector('#detalleVenta tbody');
     const totalVenta = document.getElementById('totalVenta');
-    const productosInput = document.getElementById('productos'); // 👈 corregido aquí
-    const stockInfo = document.getElementById('stock-info'); // 👈 id corregido a lo que usas en tu HTML
+    const productosInput = document.getElementById('productos');
+    const stockInfo = document.getElementById('stock-info');
 
     let productos = [];
 
-    // Mostrar stock y precio al seleccionar producto
-    productoSelect.addEventListener('change', function() {
-    const selected = this.options[this.selectedIndex];
-    const stock = selected.getAttribute('data-stock') || 0;
-
-    // Obtener precio como número
-    let precio = selected.getAttribute('data-precio') || '';
-    precio = parseFloat(precio);
-
-    // Mostrar stock
-    stockInfo.textContent = 'Stock disponible: ' + stock;
-
-    // Mostrar precio formateado en el input
-    if (!isNaN(precio)) {
-        precioInput.value = precio.toLocaleString('es-CO');
-    } else {
-        precioInput.value = '';
+    function productoSeleccionado() {
+        return productoSelect.options[productoSelect.selectedIndex];
     }
-});
 
-    // Agregar producto
+    function obtenerTallas(option) {
+        try {
+            return JSON.parse(option.getAttribute('data-tallas') || '[]');
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function actualizarProducto() {
+        const selected = productoSeleccionado();
+        const esZapato = selected.getAttribute('data-es-zapato') === '1';
+        const stock = selected.getAttribute('data-stock') || 0;
+        const precio = parseFloat(selected.getAttribute('data-precio') || '');
+
+        tallaContainer.style.display = esZapato ? 'block' : 'none';
+        tallaSelect.innerHTML = '<option value="">Seleccione una talla</option>';
+
+        if (esZapato) {
+            obtenerTallas(selected).forEach(function (talla) {
+                const option = document.createElement('option');
+                option.value = talla.id;
+                option.dataset.stock = talla.stock;
+                option.textContent = talla.numero + ' - Stock: ' + talla.stock;
+                tallaSelect.appendChild(option);
+            });
+            stockInfo.textContent = 'Seleccione una talla para consultar su stock.';
+        } else {
+            stockInfo.textContent = 'Stock disponible: ' + stock;
+        }
+
+        precioInput.value = !isNaN(precio) ? precio.toLocaleString('es-CO') : '';
+    }
+
+    function stockDisponible(id, tallaId) {
+        const selected = productoSeleccionado();
+        if (selected.getAttribute('data-es-zapato') !== '1') {
+            return parseInt(selected.getAttribute('data-stock'), 10) || 0;
+        }
+
+        const talla = obtenerTallas(selected).find(function (item) {
+            return String(item.id) === String(tallaId);
+        });
+
+        return talla ? parseInt(talla.stock, 10) : 0;
+    }
+
+    tallaSelect.addEventListener('change', function () {
+        const option = this.options[this.selectedIndex];
+        stockInfo.textContent = option.value
+            ? 'Stock disponible: ' + option.dataset.stock
+            : 'Seleccione una talla para consultar su stock.';
+    });
+
+    productoSelect.addEventListener('change', actualizarProducto);
+
     agregarBtn.addEventListener('click', function() {
-        const selected = productoSelect.options[productoSelect.selectedIndex];
+        const selected = productoSeleccionado();
         const id = selected.value;
         const nombre = selected.getAttribute('data-nombre');
+        const esZapato = selected.getAttribute('data-es-zapato') === '1';
+        const tallaId = esZapato ? tallaSelect.value : null;
+        const tallaNumero = esZapato ? tallaSelect.options[tallaSelect.selectedIndex]?.textContent.split(' - ')[0] : null;
         const precio = parseFloat(precioInput.value.replace(/\./g, '').replace(/,/g, '.'));
-        const cantidad = parseInt(cantidadInput.value);
-        const stock = parseInt(selected.getAttribute('data-stock'));
+        const costo = esAdmin && costoInput ? parseFloat(costoInput.value) : null;
+        const cantidad = parseInt(cantidadInput.value, 10);
 
         if (!id) {
             alert('Seleccione un producto.');
+            return;
+        }
+        if (esZapato && !tallaId) {
+            alert('Seleccione una talla.');
             return;
         }
         if (isNaN(precio) || precio <= 0 || isNaN(cantidad) || cantidad <= 0) {
             alert('Ingrese una cantidad y precio válidos.');
             return;
         }
-        if (cantidad > stock) {
-            alert('No puedes vender más unidades de las disponibles.');
+        if (esAdmin && (costoInput.value.trim() === '' || !Number.isFinite(costo) || costo < 0)) {
+            alert('Ingrese un costo unitario válido, mayor o igual a cero.');
             return;
         }
 
-        let existente = productos.find(p => p.id == id);
+        const existente = productos.find(function (producto) {
+            return producto.id === parseInt(id, 10) && String(producto.talla_id) === String(tallaId);
+        });
+        const cantidadActual = existente ? existente.cantidad : 0;
+
+        if (cantidadActual + cantidad > stockDisponible(id, tallaId)) {
+            alert('No puedes superar el stock disponible.');
+            return;
+        }
+
         if (existente) {
-            if (existente.cantidad + cantidad > stock) {
-                alert('No puedes superar el stock disponible.');
-                return;
-            }
             existente.cantidad += cantidad;
             existente.subtotal = existente.cantidad * existente.precio;
+            if (esAdmin) {
+                existente.ganancia = (existente.precio - existente.costo_unitario) * existente.cantidad;
+            }
         } else {
-            productos.push({
-                id: parseInt(id),
+            const nuevoProducto = {
+                id: parseInt(id, 10),
+                talla_id: tallaId ? parseInt(tallaId, 10) : null,
+                talla_numero: tallaNumero,
                 nombre,
                 precio,
                 cantidad,
                 subtotal: precio * cantidad
-            });
+            };
+
+            if (esAdmin) {
+                nuevoProducto.costo_unitario = costo;
+                nuevoProducto.ganancia = (precio - costo) * cantidad;
+            }
+
+            productos.push(nuevoProducto);
         }
 
         renderTabla();
     });
 
-    // Renderizar tabla
     function renderTabla() {
         detalleVenta.innerHTML = '';
         let total = 0;
+        let gananciaTotal = 0;
 
-        productos.forEach((p, index) => {
-            total += p.subtotal;
+        productos.forEach(function (producto, index) {
+            total += producto.subtotal;
+            if (esAdmin) {
+                gananciaTotal += producto.ganancia;
+            }
+            const nombre = producto.talla_numero
+                ? producto.nombre + ' - Talla ' + producto.talla_numero
+                : producto.nombre;
             detalleVenta.innerHTML += `
                 <tr>
-                    <td>${p.nombre}</td>
-                    <td>${p.precio.toLocaleString('es-CO')}</td>
-                    <td>${p.cantidad}</td>
-                    <td>${p.subtotal.toLocaleString('es-CO')}</td>
+                    <td>${nombre}</td>
+                    <td>${producto.precio.toLocaleString('es-CO')}</td>
+                    ${esAdmin ? `<td>${producto.costo_unitario.toLocaleString('es-CO')}</td>` : ''}
+                    <td>${producto.cantidad}</td>
+                    <td>${producto.subtotal.toLocaleString('es-CO')}</td>
+                    ${esAdmin ? `<td>${producto.ganancia.toLocaleString('es-CO')}</td>` : ''}
                     <td>
                         <button type="button" class="btn btn-danger btn-sm" onclick="eliminar(${index})">
                             <i class="fas fa-trash"></i>
@@ -239,10 +357,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         totalVenta.textContent = total.toLocaleString('es-CO');
-        productosInput.value = JSON.stringify(productos); // 👈 este campo es el que se envía al backend
+        if (esAdmin) {
+            document.getElementById('gananciaTotal').textContent = gananciaTotal.toLocaleString('es-CO');
+        }
+        productosInput.value = JSON.stringify(productos);
     }
 
-    // Eliminar producto
     window.eliminar = function(index) {
         productos.splice(index, 1);
         renderTabla();
@@ -255,6 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
         bancoContainer.style.display = this.value === 'transferencia' ? 'block' : 'none';
     });
 
+    actualizarProducto();
 });
 </script>
 @endsection
