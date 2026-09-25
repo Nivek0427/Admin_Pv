@@ -101,4 +101,23 @@ body.dark {
     color: var(--fr-yellow-soft);
 }
 
+.pagination-wrapper svg {
+    box-sizing: content-box;
+    width: 1rem;
+    height: 1rem;
+    padding: 0.5rem;
+}
+
+.pagination-wrapper {
+    margin-top: 1rem;
+}
+
+.pagination-wrapper > nav > div:first-child {
+    display: none;
+}
+
+.pagination-wrapper > nav > div:last-child > div + div {
+    margin-top: 0.5rem;
+}
+
 

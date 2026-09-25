@@ -82,7 +82,9 @@
     </tbody>
   </table>
 
-  {{ $productos->withQueryString()->links() }}
+  <div class="pagination-wrapper">
+    {{ $productos->withQueryString()->links() }}
+  </div>
 
   @foreach($productos as $p)
     <div class="modal fade" id="editarInventario{{ $p->id }}" tabindex="-1" role="dialog" aria-labelledby="editarInventarioLabel{{ $p->id }}" aria-hidden="true">
