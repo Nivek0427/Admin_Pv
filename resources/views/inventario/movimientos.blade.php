@@ -6,6 +6,15 @@
 
     <!-- Filtros -->
     <form method="GET" class="row g-2 mb-4">
+        <div class="col-md-4">
+            <input
+                type="search"
+                name="producto"
+                class="form-control"
+                placeholder="Buscar producto por nombre o ID..."
+                value="{{ request('producto') }}"
+            >
+        </div>
         <div class="col-auto">
             <input type="date" name="fecha_desde" class="form-control" value="{{ request('fecha_desde') }}">
         </div>

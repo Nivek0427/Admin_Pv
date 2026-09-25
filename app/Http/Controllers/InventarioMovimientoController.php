@@ -12,6 +12,20 @@ class InventarioMovimientoController extends Controller
     {
         $query = InventarioMovimiento::with(['producto', 'talla', 'usuario']);
 
+        $producto = trim((string) $request->input('producto', ''));
+
+        if ($producto !== '') {
+            $query->where(function ($movementQuery) use ($producto) {
+                $movementQuery->whereHas('producto', function ($productQuery) use ($producto) {
+                    $productQuery->where('nombre', 'like', "%{$producto}%");
+                });
+
+                if (ctype_digit($producto)) {
+                    $movementQuery->orWhere('producto_id', (int) $producto);
+                }
+            });
+        }
+
         // Filtro por rango de fechas
         if ($request->filled('fecha_desde') && $request->filled('fecha_hasta')) {
             $query->whereBetween('created_at', [
@@ -48,7 +62,8 @@ class InventarioMovimientoController extends Controller
         if (
             !$request->filled('tipo') &&
             !$request->filled('fecha_desde') &&
-            !$request->filled('fecha_hasta')
+            !$request->filled('fecha_hasta') &&
+            !$request->filled('producto')
         ) {
             $query->whereDate('created_at', Carbon::today());
         }
