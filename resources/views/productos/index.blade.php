@@ -96,7 +96,9 @@
                     @endforelse
                 </tbody>
             </table>
-            {{ $productos->withQueryString()->links() }}
+            <div class="pagination-wrapper">
+                {{ $productos->withQueryString()->links() }}
+            </div>
         </div>
     </div>
 </div>
