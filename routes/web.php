@@ -79,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
     // Inventario
     Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index')->middleware('can:inventario');
     Route::post('/inventario/{id}/actualizar', [InventarioController::class, 'updateCantidad'])->name('inventario.updateCantidad');
+    Route::post('/inventario/{id}/actualizar-tallas', [InventarioController::class, 'actualizarTallas'])->name('inventario.actualizarTallas');
     Route::get('/inventario/movimientos', [InventarioMovimientoController::class, 'index'])
     ->name('inventario.movimientos');
 

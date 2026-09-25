@@ -12,9 +12,28 @@ use Illuminate\Validation\ValidationException;
 class ProductoController extends Controller
 {
     // Mostrar todos los productos
-    public function index()
+    public function index(Request $request)
     {
-        $productos = Producto::all();
+        $query = Producto::query();
+
+        if ($request->filled('buscar')) {
+            $buscar = trim($request->input('buscar'));
+
+            $query->where(function ($productoQuery) use ($buscar) {
+                $productoQuery->where('nombre', 'like', "%{$buscar}%");
+
+                if (ctype_digit($buscar)) {
+                    $productoQuery->orWhere('id', (int) $buscar);
+                }
+            });
+        }
+
+        if ($request->filled('categoria')) {
+            $query->where('categoria', $request->input('categoria'));
+        }
+
+        $productos = $query->orderBy('id')->paginate(15)->withQueryString();
+
         return view('productos.index', compact('productos'));
     }
 
