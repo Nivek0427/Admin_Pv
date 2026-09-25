@@ -6,6 +6,7 @@ use App\Models\Producto;
 use App\Models\ProductoTalla;
 use App\Models\Talla;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -78,7 +79,22 @@ class ProductoController extends Controller
                     'talla_id' => $talla['talla_id'],
                     'stock' => $talla['stock'],
                 ]);
+
+                if ($talla['stock'] > 0) {
+                    $producto->registrarMovimientoConTalla(
+                        $talla['talla_id'],
+                        $talla['stock'],
+                        'stock_inicial',
+                        Auth::id()
+                    );
+                }
             }
+        } elseif ($stock > 0) {
+            $producto->registrarMovimiento(
+                $stock,
+                'stock_inicial',
+                Auth::id()
+            );
         }
 
         // Crear registro inicial en inventario automáticamente.
