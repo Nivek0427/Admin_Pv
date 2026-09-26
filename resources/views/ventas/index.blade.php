@@ -2,14 +2,15 @@
 
 @section('content')
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="m-0">Ventas</h3>
-
-    <a href="{{ route('ventas.create') }}" class="btn btn-primary"
-        style="background-color:grey; color:#000; font-weight:bold;">
-        <i class="fas fa-plus"></i> Nueva Venta
-    </a>
-</div>
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start mb-4">
+        <div class="mb-3 mb-sm-0">
+            <h1 class="fr-page-title">Ventas</h1>
+            <p class="fr-text-muted mb-0">Consulta, filtra y revisa las ventas registradas.</p>
+        </div>
+        <a href="{{ route('ventas.create') }}" class="btn-fr-primary">
+            <i class="fas fa-plus"></i> Nueva Venta
+        </a>
+    </div>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -19,10 +20,10 @@
     @endif
 
     <div class="mb-3">
-        <form class="row g-2">
+        <form class="fr-filters mb-3">
 
             <div class="col-auto">
-                <select name="tipo" class="form-control" onchange="this.form.submit()">
+                <select name="tipo" class="form-control form-control-fr" onchange="this.form.submit()">
                     <option value="">-- Filtro rápido --</option>
                     <option value="dia" {{request('tipo')=='dia'? 'selected':''}}>Hoy</option>
                     <option value="ayer" {{ request('tipo')=='ayer' ? 'selected' : '' }}>Ayer</option>
@@ -33,7 +34,7 @@
             </div>
 
             <div class="col-auto">
-                <select name="metodo_pago" class="form-control" onchange="this.form.submit()">
+                <select name="metodo_pago" class="form-control form-control-fr" onchange="this.form.submit()">
                     <option value="">Todos los métodos</option>
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
@@ -45,22 +46,22 @@
 
             @if(request('tipo') == 'rango')
             <div class="col-auto">
-                <input type="date" name="desde" class="form-control" value="{{ request('desde') }}">
+                <input type="date" name="desde" class="form-control form-control-fr" value="{{ request('desde') }}">
             </div>
 
             <div class="col-auto">
-                <input type="date" name="hasta" class="form-control" value="{{ request('hasta') }}">
+                <input type="date" name="hasta" class="form-control form-control-fr" value="{{ request('hasta') }}">
             </div>
 
             <div class="col-auto">
-                <button class="btn btn-primary">Aplicar</button>
+                <button class="btn-fr-primary">Aplicar</button>
             </div>
             @endif
 
         </form>
     </div>
 
-    <form action="{{ route('ventas.index') }}" method="GET" class="mb-3">
+    <form action="{{ route('ventas.index') }}" method="GET" class="fr-filters mb-3">
         {{-- Mantener filtros existentes --}}
         <input type="hidden" name="tipo" value="{{ request('tipo') }}">
         <input type="hidden" name="metodo_pago" value="{{ request('metodo_pago') }}">
@@ -68,14 +69,14 @@
         <input type="hidden" name="hasta" value="{{ request('hasta') }}">
 
         <div class="input-group">
-            <input type="text" name="buscar" class="form-control"
+            <input type="text" name="buscar" class="form-control form-control-fr"
                 placeholder="Buscar por cliente, ID, total o estado..."
                 value="{{ request('buscar') }}">
 
-            <button class="btn btn-primary ms-2" type="submit">Buscar</button>
+            <button class="btn-fr-primary" type="submit">Buscar</button>
 
             @if(request('buscar'))
-                <a href="{{ route('ventas.index') }}" class="btn btn-secondary">
+                <a href="{{ route('ventas.index') }}" class="btn-fr-secondary">
                     Limpiar
                 </a>
             @endif
@@ -84,7 +85,10 @@
 
 
 
-    <table class="table table-bordered">
+        <div class="fr-card">
+            <div class="fr-card-body">
+             <div class="table-responsive">
+        <table class="table table-bordered fr-table fr-table-sales">
         <thead class="table-dark">
             <tr>
                 <th>ID</th>
@@ -106,9 +110,9 @@
                     <td>{{ $venta->metodo_pago === 'addi' ? 'ADDI' : ucfirst($venta->metodo_pago) }}</td>
                     <td>
                         @if($venta->estado === 'activa')
-                            <span class="badge bg-success">Activa</span>
+                            <span class="fr-badge fr-badge-active-sales">Activa</span>
                         @else
-                            <span class="badge bg-danger">Revocada</span>
+                            <span class="fr-badge fr-badge-revoked">Revocada</span>
                         @endif
                     </td>
                     <td>
@@ -117,11 +121,11 @@
                             <form action="{{ route('ventas.revocar', $venta->id) }}" method="POST" style="display:inline;">
                                 @csrf
                                 @method('PUT')
-                                <button type="submit" class="btn btn-warning btn-sm">Revocar</button>
+                                <button type="submit" class="btn-fr-warning btn-fr-sm">Revocar</button>
                             </form>
                         @endif
                         @endcan
-                        <a href="{{ route('ventas.show', $venta->id) }}" class="btn btn-sm btn-info">
+                        <a href="{{ route('ventas.show', $venta->id) }}" class="btn-fr-info btn-fr-sm">
                             <i class="fas fa-eye"></i> Ver
                         </a>
 
@@ -131,5 +135,8 @@
             @endforeach
         </tbody>
     </table>
+             </div>
+            </div>
+        </div>
 </div>
 @endsection
