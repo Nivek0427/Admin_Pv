@@ -4,10 +4,14 @@
 
 @section('content')
 <div class="container">
-    <h2 class="mb-4">Realizar Venta</h2>
+    <div class="mb-4">
+        <h1 class="fr-page-title">Realizar Venta</h1>
+        <p class="fr-text-muted mb-0">Agrega productos, revisa el total y registra el pago.</p>
+    </div>
 
-    <form action="{{ route('ventas.store') }}" method="POST" id="ventaForm">
+    <form action="{{ route('ventas.store') }}" method="POST" id="ventaForm" class="fr-card mb-4">
         @csrf
+        <div class="fr-card-body">
 
        <div class="row mb-3">
 
@@ -17,7 +21,7 @@
                 type="text"
                 name="cliente"
                 id="cliente"
-                class="form-control"
+                class="form-control form-control-fr"
                 placeholder="Juan Pérez"
             >
         </div>
@@ -29,7 +33,7 @@
                 type="date"
                 name="fecha"
                 id="fecha"
-                class="form-control"
+                class="form-control form-control-fr"
                 value="{{ now()->toDateString() }}"
                 max="{{ now()->toDateString() }}"
             >
@@ -42,9 +46,9 @@
 
         <!-- Selección de producto -->
         <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-5">
                 <label for="producto" class="form-label">Producto</label>
-                <select id="producto" name="producto_id" class="form-control">
+                <select id="producto" name="producto_id" class="form-control form-control-fr">
                     <option value="">Seleccione un producto</option>
                     @foreach ($productos as $producto)
                         @php
@@ -68,33 +72,35 @@
                     @endforeach
                 </select>
                 @can('productos.verstock')
-                    <small id="stock-info" class="text-muted d-block mt-2">Stock disponible: 0</small>
+                    <small id="stock-info" class="text-muted d-block mt-2 venta-stock-info">Stock disponible: 0</small>
                 @else
-                    <small id="stock-info" class="d-none"></small>
+                    <small id="stock-info" class="d-none venta-stock-info"></small>
                 @endcan
             </div>
 
             <div class="col-md-2">
                 <label for="cantidad" class="form-label">Cantidad</label>
-                <input type="number" id="cantidad" name="cantidad" class="form-control" min="1">
+                <input type="number" id="cantidad" name="cantidad" class="form-control form-control-fr" min="1">
 
             </div>
 
-            <div class="col-md-3" id="talla-container" style="display:none">
+            <div class="col-md-2" id="talla-container" style="display:none">
                 <label for="talla_id" class="form-label">Talla</label>
-                <select id="talla_id" class="form-control">
+                <select id="talla_id" class="form-control form-control-fr">
                     <option value="">Seleccione una talla</option>
                 </select>
             </div>
 
-            <div class="col-md-2">
-                <label for="precio" class="form-label">Precio</label>
-                <input type="number" id="precio" class="form-control">
-            </div>
-
             <div class="col-md-3">
-                <label for="metodo_pago" class="form-label mt-3">Método de pago</label>
-                <select name="metodo_pago" id="metodo_pago" class="form-control" required>
+                <label for="precio" class="form-label">Precio</label>
+                <input type="number" id="precio" class="form-control form-control-fr">
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="metodo_pago" class="form-label">Método de pago</label>
+                <select name="metodo_pago" id="metodo_pago" class="form-control form-control-fr" required>
                     <option value="">Seleccione...</option>
                     <option value="efectivo">Efectivo</option>
                     <option value="addi">ADDI</option>
@@ -105,8 +111,8 @@
             </div>
 
             <div class="col-md-3" id="banco_container" style="display:none">
-                <label class="form-label mt-3">Banco</label>
-                <select name="banco_id" class="form-control">
+                <label class="form-label">Banco</label>
+                <select name="banco_id" class="form-control form-control-fr">
                     <option value="">Seleccione banco</option>
                     @foreach($bancos as $banco)
                         <option value="{{ $banco->id }}">{{ $banco->nombre }}</option>
@@ -125,7 +131,7 @@
         <p id="stock-info-extra" class="text-muted"></p>
 
         <!-- Tabla de productos agregados -->
-        <table class="table table-bordered mt-4" id="detalleVenta">
+        <table class="table table-bordered mt-4 fr-table" id="detalleVenta">
             <thead>
                 <tr>
                     <th>Producto</th>
@@ -148,14 +154,23 @@
         <!-- Campos ocultos -->
         <input type="hidden" name="productos" id="productos">
 
-        <div class="mt-3 d-flex">
-            <button type="submit" class="btn btn-primary"
-             style="background-color:#FFD700; color:#000; font-weight:bold;">Guardar Venta</button>
-            <a href="{{ route('ventas.index') }}" class="btn btn-secondary" style="margin-left: 10px;">Volver</a>
+        <div class="mt-3 d-flex flex-wrap">
+            <button type="submit" class="btn-fr-primary mr-2 mb-2">Guardar Venta</button>
+            <a href="{{ route('ventas.index') }}" class="btn-fr-secondary mb-2">Volver</a>
+        </div>
         </div>
     </form>
 
 </div>
+
+@push('styles')
+<style>
+    .venta-stock-info {
+        min-height: 2.5rem;
+        line-height: 1.25rem;
+    }
+</style>
+@endpush
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

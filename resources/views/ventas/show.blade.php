@@ -4,12 +4,19 @@
 
 @section('content')
 <div class="container">
-    <h2 class="mb-3">Detalle de Venta #{{ $venta->id }}</h2>
+    <div class="mb-4">
+        <h1 class="fr-page-title">Detalle de Venta #{{ $venta->id }}</h1>
+        <p class="fr-text-muted mb-0">Resumen de la venta y sus productos.</p>
+    </div>
 
-    <p><strong>Cliente:</strong> {{ $venta->cliente ?? 'Cliente general' }}</p>
-    <p><strong>Total:</strong> ${{ number_format($venta->total, 2) }}</p>
-    <p><strong>Fecha:</strong> {{ $venta->created_at->format('d/m/Y H:i') }}</p>
-    <p><strong>Método de pago:</strong> {{ $venta->metodo_pago === 'addi' ? 'ADDI' : ucfirst($venta->metodo_pago) }}</p>
+    <div class="fr-card mb-3">
+        <div class="fr-card-body d-flex flex-wrap">
+            <p class="mb-2 mr-4"><strong>Cliente:</strong> {{ $venta->cliente ?? 'Cliente general' }}</p>
+            <p class="mb-2 mr-4"><strong>Total:</strong> ${{ number_format($venta->total, 2) }}</p>
+            <p class="mb-2 mr-4"><strong>Fecha:</strong> {{ $venta->created_at->format('d/m/Y H:i') }}</p>
+            <p class="mb-2"><strong>Método de pago:</strong> {{ $venta->metodo_pago === 'addi' ? 'ADDI' : ucfirst($venta->metodo_pago) }}</p>
+        </div>
+    </div>
 
     @if ($venta->estado === 'revocada')
     <div class="alert alert-warning border rounded shadow-sm mt-3">
@@ -23,8 +30,8 @@
     @endif
 
 
-    <div class="card mt-3">
-        <div class="card-body table-responsive">
+    <div class="fr-card mt-3">
+        <div class="fr-card-body table-responsive">
             @role('admin')
                 @php
                     $costoTotalVenta = 0;
@@ -32,7 +39,7 @@
                     $tieneDetallesSinCosto = false;
                 @endphp
             @endrole
-            <table class="table table-striped">
+            <table class="table table-striped fr-table fr-table-sales">
                 <thead class="table-dark">
                     <tr>
                         <th>Producto</th>
@@ -122,7 +129,7 @@
     </div>
 
     <div class="mt-3">
-        <a href="{{ route('ventas.index') }}" class="btn btn-secondary">Volver</a>
+        <a href="{{ route('ventas.index') }}" class="btn-fr-secondary">Volver</a>
 
         @if($venta->estado !== 'revocada')
             <!-- Formulario pequeño para revocar y enviar una razón opcional -->
@@ -133,7 +140,7 @@
     <input type="hidden" name="reason" id="reasonInput">
 
     @can('ventas.revocar')
-    <button type="button" class="btn btn-warning" onclick="revocarVenta()">
+    <button type="button" class="btn-fr-warning" onclick="revocarVenta()">
         Revocar venta
     </button>
     @endcan

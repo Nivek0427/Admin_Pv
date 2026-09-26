@@ -4,7 +4,18 @@
 
 @section('content')
 <div class="container">
-    <h2 class="mb-4">Listado de Productos</h2>
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start mb-4">
+        <div class="mb-3 mb-sm-0">
+            <h1 class="fr-page-title">Productos</h1>
+            <p class="fr-text-muted mb-0">Consulta y administra el catálogo de productos.</p>
+        </div>
+
+        @can('productos.create')
+            <a href="{{ route('productos.create') }}" class="btn-fr-primary">
+                <i class="fas fa-plus"></i> Nuevo Producto
+            </a>
+        @endcan
+    </div>
 
     @if (session('success'))
         <div class="alert alert-success">
@@ -12,24 +23,15 @@
         </div>
     @endif
 
-    @can('productos.create')
-    <div class="mb-3 text-end">
-        <a href="{{ route('productos.create') }}" class="btn btn-primary"
-                style="background-color:#FFD700; color:#000; font-weight:bold;">
-            <i class="fas fa-plus"></i> Nuevo Producto
-        </a>
-    </div>
-    @endcan
-
-    <form method="GET" action="{{ route('productos.index') }}" class="row g-2 mb-3">
-        <div class="col-md-5">
+    <form method="GET" action="{{ route('productos.index') }}" class="fr-filters mb-3">
+        <div class="fr-filter-field">
             <label for="buscar" class="form-label">Buscar por nombre o ID</label>
-            <input type="search" name="buscar" id="buscar" class="form-control"
+            <input type="search" name="buscar" id="buscar" class="form-control form-control-fr"
                 value="{{ request('buscar') }}" placeholder="Ej. Nike o 12">
         </div>
-        <div class="col-md-4">
+        <div class="fr-filter-field">
             <label for="categoria" class="form-label">Categoría</label>
-            <select name="categoria" id="categoria" class="form-control">
+            <select name="categoria" id="categoria" class="form-control form-control-fr">
                 <option value="">Todas</option>
                 <option value="Camisas" {{ request('categoria') === 'Camisas' ? 'selected' : '' }}>Camisas</option>
                 <option value="Pantalones" {{ request('categoria') === 'Pantalones' ? 'selected' : '' }}>Pantalones</option>
@@ -38,17 +40,17 @@
                 <option value="Accesorios" {{ request('categoria') === 'Accesorios' ? 'selected' : '' }}>Accesorios</option>
             </select>
         </div>
-        <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary mr-2">Buscar</button>
-            <a href="{{ route('productos.index') }}" class="btn btn-secondary">Limpiar</a>
+        <div class="fr-filter-actions">
+            <button type="submit" class="btn-fr-primary">Buscar</button>
+            <a href="{{ route('productos.index') }}" class="btn-fr-secondary">Limpiar</a>
         </div>
     </form>
 
-
-    <div class="card">
-        <div class="card-body table-responsive">
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
+    <div class="fr-card">
+        <div class="fr-card-body">
+            <div class="table-responsive">
+                <table class="fr-table">
+                <thead class="table-secondary">
                     <tr>
                         <th>ID</th>
                         <th>Nombre</th>
@@ -73,7 +75,7 @@
                             @can('acciones')
                             <td>
                                 @can('productos.edit')
-                                <a href="{{ route('productos.edit', $producto->id) }}" class="btn btn-sm btn-warning">
+                                <a href="{{ route('productos.edit', $producto->id) }}" class="btn-fr-warning btn-fr-sm">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 @endcan
@@ -81,7 +83,7 @@
                                 <form action="{{ route('productos.destroy', $producto->id) }}" method="POST" style="display:inline;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este producto?')">
+                                    <button type="submit" class="btn-fr-danger btn-fr-sm" onclick="return confirm('¿Seguro que deseas eliminar este producto?')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -91,11 +93,12 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted">No hay productos registrados</td>
+                            <td colspan="6" class="fr-table-empty">No hay productos registrados</td>
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+                </table>
+            </div>
             <div class="pagination-wrapper">
                 {{ $productos->withQueryString()->links() }}
             </div>
@@ -103,16 +106,4 @@
     </div>
 </div>
 @endsection
-
-@push('styles')
-<style>
-    /* Quita el efecto hover solo en el encabezado de la tabla */
-    thead.table-dark tr:hover,
-    thead.table-dark th:hover {
-        background-color: #212529 !important; /* color original oscuro */
-        color: #fff !important;
-        cursor: default !important; /* evita el cambio de cursor */
-    }
-</style>
-@endpush
 
