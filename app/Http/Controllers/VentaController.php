@@ -124,7 +124,7 @@ class VentaController extends Controller
 
         // Validar datos básicos de la venta
         $request->validate([
-            'metodo_pago' => 'required|in:efectivo,addi,transferencia,sistecredito,Fiado,contraentrega',
+            'metodo_pago' => 'required|in:efectivo,addi,transferencia,sistecredito,Fiado,tarjeta,contraentrega',
             'banco_id' => 'required_if:metodo_pago,transferencia'
         ]);
 

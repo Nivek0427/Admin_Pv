@@ -39,7 +39,7 @@
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
                     <option value="addi">ADDI</option>
-                    <option value="tarjeta">Tarjeta (histórico)</option>
+                    <option value="tarjeta">Tarjeta</option>
                     <option value="sistecredito">Sistecrédito</option>
                     <option value="contraentrega">Contraentrega</option>
                 </select>

@@ -107,6 +107,7 @@
                     <option value="transferencia">Transferencia</option>
                     <option value="sistecredito">Sistecrédito</option>
                     <option value="Fiado">Fiado</option>
+                    <option value="tarjeta">Tarjeta</option>
                     <option value="contraentrega">Contraentrega</option>
                 </select>
             </div>
