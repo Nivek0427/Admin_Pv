@@ -41,6 +41,7 @@
                     <option value="addi">ADDI</option>
                     <option value="tarjeta">Tarjeta (histórico)</option>
                     <option value="sistecredito">Sistecrédito</option>
+                    <option value="contraentrega">Contraentrega</option>
                 </select>
             </div>
 

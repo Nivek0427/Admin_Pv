@@ -47,6 +47,7 @@
             <option value="transferencia">Transferencia</option>
             <option value="addi">ADDI</option>
             <option value="sistecredito">Sistecrédito</option>
+            <option value="contraentrega">Contraentrega</option>
         </select>
     </div>
 
